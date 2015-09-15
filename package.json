@@ -1,0 +1,27 @@
+{
+  "name": "scratch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "compare-level-backends.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cnd": "^1.0.8",
+    "coffeenode-chr": "^0.1.9",
+    "coffeenode-suspend": "^0.1.11",
+    "htmlparser2": "^3.8.3",
+    "jsondown": "^0.1.1",
+    "leveldown": "^1.4.1",
+    "levelup": "^1.2.1",
+    "markdown-it": "^4.4.0",
+    "markdown-it-footnote": "^1.0.0",
+    "markdown-it-regexp": "^0.4.0",
+    "memdown": "^1.0.0",
+    "pipedreams": "^0.2.26",
+    "sqldown": "^2.1.0",
+    "sqlite3": "^3.0.10"
+  }
+}
