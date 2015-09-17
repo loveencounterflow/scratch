@@ -49,19 +49,21 @@
 
   CS = require('coffee-script');
 
-  options_route = './options.coffee';
+  options_route = '../options.coffee';
 
   ref = require('./OPTIONS'), CACHE = ref.CACHE, OPTIONS = ref.OPTIONS;
 
-  this._compile_options = function() {
-
-    /* TAINT code duplication */
+  this.compile_options = function() {
 
     /* TAINT must insert '../' when used from `lib/` */
-    var cache_locator, cache_route, key, ref1, route;
-    this.options = this._eval_coffee_file(options_route);
+    var cache_locator, cache_route, key, options_home, options_locator, ref1, route;
+    options_locator = require.resolve(njs_path.resolve(__dirname, options_route));
+    debug('©zNzKn', options_locator);
+    options_home = njs_path.dirname(options_locator);
+    this.options = OPTIONS.from_locator(options_locator);
+    this.options['home'] = options_home;
     cache_route = this.options['cache']['route'];
-    this.options['cache']['locator'] = cache_locator = njs_path.resolve(__dirname, cache_route);
+    this.options['cache']['locator'] = cache_locator = njs_path.resolve(options_home, cache_route);
     if (!njs_fs.existsSync(cache_locator)) {
       this.options['cache']['%self'] = {};
       this._save_cache();
@@ -71,13 +73,13 @@
     ref1 = this.options['routes'];
     for (key in ref1) {
       route = ref1[key];
-      this.options['locators'][key] = njs_path.resolve(__dirname, route);
+      this.options['locators'][key] = njs_path.resolve(options_home, route);
     }
     debug('©ed8gv', JSON.stringify(this.options, null, '  '));
     return CACHE.update(options);
   };
 
-  this._compile_options();
+  this.compile_options();
 
   this.write_mkts_settings = function(handler) {
     return step((function(_this) {
@@ -224,11 +226,12 @@
   };
 
   this.write_pdf = function(layout_info, handler) {
-    var aux_locator, count, digest, last_digest, pdf_command, pdf_from_tex, tex_locator, tmp_home;
-    pdf_command = njs_path.join(__dirname, 'pdf-from-tex.sh');
-    tmp_home = __dirname;
-    tex_locator = njs_path.join(__dirname, 'load-with-absolute-path.tex');
-    aux_locator = njs_path.join(__dirname, 'load-with-absolute-path.aux');
+    var aux_locator, count, digest, last_digest, options_home, pdf_command, pdf_from_tex, tex_locator, tmp_home;
+    options_home = this.options['home'];
+    pdf_command = njs_path.join(options_home, 'pdf-from-tex.sh');
+    tmp_home = options_home;
+    tex_locator = njs_path.join(options_home, 'load-with-absolute-path.tex');
+    aux_locator = njs_path.join(options_home, 'load-with-absolute-path.aux');
     last_digest = null;
     if (njs_fs.existsSync(aux_locator)) {
       last_digest = CND.id_from_route(aux_locator);
@@ -294,10 +297,6 @@
   };
 
   this.main = function() {
-    var settings_tex, settings_tex_route;
-    settings_tex_route = njs_path.join(__dirname, 'mkts-settings.tex');
-    settings_tex = "\\def\\foobar{example for a TeX-def macro}\n\\newcommand{\\mktsPathsMktsHome}{/Volumes/Storage/io/jizura/tex-inputs}\n\\newcommand{\\mktsPathsFontsHome}{/Volumes/Storage/io/jizura-fonts/fonts}";
-    njs_fs.writeFileSync(settings_tex_route, settings_tex);
     return this.write_pdf(null, (function(_this) {
       return function(error) {
         if (error != null) {

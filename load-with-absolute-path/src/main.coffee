@@ -46,10 +46,10 @@ options_route             = '../options.coffee'
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@_compile_options = ->
-  ### TAINT code duplication ###
+@compile_options = ->
   ### TAINT must insert '../' when used from `lib/` ###
-  options_locator                   = require.resolve __dirname, options_route
+  options_locator                   = require.resolve njs_path.resolve __dirname, options_route
+  debug '©zNzKn', options_locator
   options_home                      = njs_path.dirname options_locator
   @options                          = OPTIONS.from_locator options_locator
   @options[ 'home' ]                = options_home
@@ -69,7 +69,7 @@ options_route             = '../options.coffee'
   debug '©ed8gv', JSON.stringify @options, null, '  '
   CACHE.update options
 #...........................................................................................................
-@_compile_options()
+@compile_options()
 
 #-----------------------------------------------------------------------------------------------------------
 @write_mkts_settings = ( handler ) ->

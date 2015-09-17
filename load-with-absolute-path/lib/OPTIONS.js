@@ -1,5 +1,5 @@
 (function() {
-  var CND, CS, alert, badge, debug, echo, help, info, log, njs_fs, njs_os, njs_path, options_route_fallback, rpr, urge, warn, whisper;
+  var CND, CS, alert, badge, debug, echo, help, info, log, njs_fs, njs_os, njs_path, rpr, urge, warn, whisper;
 
   njs_path = require('path');
 
@@ -32,8 +32,6 @@
   echo = CND.echo.bind(CND);
 
   CS = require('coffee-script');
-
-  options_route_fallback = './options.coffee';
 
   this.CACHE = {};
 
@@ -117,6 +115,10 @@
     return CS["eval"](source, {
       bare: true
     });
+  };
+
+  this.OPTIONS.from_locator = function(options_locator) {
+    return this._eval_coffee_file(options_locator);
   };
 
 }).call(this);
