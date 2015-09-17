@@ -114,7 +114,11 @@ options_route             = './options.coffee'
   fonts_route                       = @options[ 'fonts' ][ 'route' ]
   @options[ 'fonts' ][ 'locator' ]  = fonts_locator = njs_path.resolve __dirname, fonts_route
   #.........................................................................................................
-  # debug '©ed8gv', JSON.stringify @options, null, '  '
+  @options[ 'locators' ] = {}
+  for key, route of @options[ 'routes' ]
+    @options[ 'locators' ][ key ] = njs_path.resolve __dirname, route
+  #.........................................................................................................
+  debug '©ed8gv', JSON.stringify @options, null, '  '
   @_update_cache()
 #...........................................................................................................
 @_compile_options()
@@ -132,9 +136,9 @@ options_route             = './options.coffee'
     for { texname, home, filename, } in @options[ 'fonts' ][ 'declarations' ]
       if use_new_syntax
         ### TAINT should properly escape values ###
-        lines.push "\\newfontface\\#{texname}{#{filename}}[Path=\\#{home}/]"
+        lines.push "\\newfontface\\#{texname}{#{filename}}[Path=#{home}/]"
       else
-        lines.push "\\newfontface\\#{texname}[Path=\\#{home}/]{#{filename}}"
+        lines.push "\\newfontface\\#{texname}[Path=#{home}/]{#{filename}}"
     #.......................................................................................................
     njs_fs.writeFile fonts_locator, ( lines.join '\n' ), handler
 

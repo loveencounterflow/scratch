@@ -355,7 +355,7 @@
         var version;
         version = (yield _this.read_texlive_package_version('fontspec', resume));
         (yield _this.write_font_declarations(resume));
-        return help("ok");
+        return _this.main();
       };
     })(this));
   }

@@ -93,6 +93,8 @@ INPUT /usr/local/texlive/2014/texmf-dist/tex/generic/ifxetex/ifxetex.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/gloss-english.ldf
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/gloss-english.ldf
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/gloss-english.ldf
+INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/.mkts-fonts.sty
+INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/.mkts-fonts.sty
 INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
 INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
 OUTPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
