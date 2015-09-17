@@ -109,10 +109,12 @@ options_route             = './options.coffee'
     @options[ 'cache' ][ '%self' ] = {}
     @_save_cache()
   #.........................................................................................................
+  @options[ 'cache' ][ '%self' ]    = require cache_locator
+  #.........................................................................................................
   fonts_route                       = @options[ 'fonts' ][ 'route' ]
   @options[ 'fonts' ][ 'locator' ]  = fonts_locator = njs_path.resolve __dirname, fonts_route
   #.........................................................................................................
-  debug '©ed8gv', JSON.stringify @options, null, '  '
+  # debug '©ed8gv', JSON.stringify @options, null, '  '
   @_update_cache()
 #...........................................................................................................
 @_compile_options()
@@ -125,16 +127,16 @@ options_route             = './options.coffee'
     help "writing #{fonts_locator}"
     help "for fontspec@#{fontspec_version}"
     use_new_syntax    = SEMVER.satisfies fontspec_version, '>=2.4.0'
+    lines             = []
     #.......................................................................................................
     for { texname, home, filename, } in @options[ 'fonts' ][ 'declarations' ]
       if use_new_syntax
         ### TAINT should properly escape values ###
-        debug '©JstSk', "\\newfontface\\#{texname}{#{filename}}[Path=\\#{home}/]"
+        lines.push "\\newfontface\\#{texname}{#{filename}}[Path=\\#{home}/]"
       else
-        debug '©JstSk', "\\newfontface\\#{texname}[Path=\\#{home}/]{#{filename}}"
+        lines.push "\\newfontface\\#{texname}[Path=\\#{home}/]{#{filename}}"
     #.......................................................................................................
-    handler()
-
+    njs_fs.writeFile fonts_locator, ( lines.join '\n' ), handler
 
 #-----------------------------------------------------------------------------------------------------------
 @read_texlive_package_version = ( package_name, handler ) ->
@@ -313,7 +315,6 @@ options_route             = './options.coffee'
 
 ############################################################################################################
 unless module.parent?
-  # @main()
   # help @_get_sysid()
   # @test_versions()
   # debug '©q9kwu', cached_settings = @_get_cached_settings()
@@ -327,8 +328,9 @@ unless module.parent?
   # @_get_cache 'foobar', ( -> 42 )
   step ( resume ) =>
     version = yield @read_texlive_package_version 'fontspec', resume
-    help "fontspec@#{version}"
-    # yield @write_font_declarations resume
+    # help "fontspec@#{version}"
+    yield @write_font_declarations resume
+    @main()
     # help "ok"
 
 

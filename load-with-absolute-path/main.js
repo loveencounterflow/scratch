@@ -147,9 +147,9 @@
       this.options['cache']['%self'] = {};
       this._save_cache();
     }
+    this.options['cache']['%self'] = require(cache_locator);
     fonts_route = this.options['fonts']['route'];
     this.options['fonts']['locator'] = fonts_locator = njs_path.resolve(__dirname, fonts_route);
-    debug('©ed8gv', JSON.stringify(this.options, null, '  '));
     return this._update_cache();
   };
 
@@ -158,24 +158,25 @@
   this.write_font_declarations = function(handler) {
     return step((function(_this) {
       return function*(resume) {
-        var filename, fonts_locator, fontspec_version, home, i, len, ref, ref1, texname, use_new_syntax;
+        var filename, fonts_locator, fontspec_version, home, i, len, lines, ref, ref1, texname, use_new_syntax;
         fontspec_version = (yield _this.read_texlive_package_version('fontspec', resume));
         fonts_locator = _this.options['fonts']['locator'];
         help("writing " + fonts_locator);
         help("for fontspec@" + fontspec_version);
         use_new_syntax = SEMVER.satisfies(fontspec_version, '>=2.4.0');
+        lines = [];
         ref = _this.options['fonts']['declarations'];
         for (i = 0, len = ref.length; i < len; i++) {
           ref1 = ref[i], texname = ref1.texname, home = ref1.home, filename = ref1.filename;
           if (use_new_syntax) {
 
             /* TAINT should properly escape values */
-            debug('©JstSk', "\\newfontface\\" + texname + "{" + filename + "}[Path=\\" + home + "/]");
+            lines.push("\\newfontface\\" + texname + "{" + filename + "}[Path=\\" + home + "/]");
           } else {
-            debug('©JstSk', "\\newfontface\\" + texname + "[Path=\\" + home + "/]{" + filename + "}");
+            lines.push("\\newfontface\\" + texname + "[Path=\\" + home + "/]{" + filename + "}");
           }
         }
-        return handler();
+        return njs_fs.writeFile(fonts_locator, lines.join('\n'), handler);
       };
     })(this));
   };
@@ -353,7 +354,8 @@
       return function*(resume) {
         var version;
         version = (yield _this.read_texlive_package_version('fontspec', resume));
-        return help("fontspec@" + version);
+        (yield _this.write_font_declarations(resume));
+        return help("ok");
       };
     })(this));
   }
