@@ -39,71 +39,22 @@ ASYNC                     = require 'async'
 # options                   = require './options'
 SEMVER                    = require 'semver'
 CS                        = require 'coffee-script'
-options_route             = './options.coffee'
+options_route             = '../options.coffee'
+{ CACHE, OPTIONS, }       = require './OPTIONS'
 
 
 #===========================================================================================================
-# OPTIONS, CACHE
-#-----------------------------------------------------------------------------------------------------------
-@options = null
-
-#-----------------------------------------------------------------------------------------------------------
-@_eval_coffee_file = ( route ) ->
-  rqr_route = require.resolve route
-  source    = njs_fs.readFileSync rqr_route, encoding: 'utf-8'
-  return CS.eval source, bare: true
-
-#-----------------------------------------------------------------------------------------------------------
-@_update_cache = ->
-  cache             = @options[ 'cache' ][ '%self' ]
-  cache[ 'sysid' ]  = sysid = @_get_sysid()
-  unless cache[ sysid ]?
-    sys_cache         = {}
-    cache[ sysid ]    = sys_cache
-  @_save_cache()
-
-#-----------------------------------------------------------------------------------------------------------
-@_set_cache = ( key, value, save = yes ) ->
-  target          = @options[ 'cache' ][ '%self' ][ @options[ 'cache' ][ '%self' ][ 'sysid' ] ]
-  target[ key ]  = value
-  @_save_cache() if save?
-  return null
-
-#-----------------------------------------------------------------------------------------------------------
-@_get_cache = ( key, method, save = yes, handler = null ) ->
-  cache   = @options[ 'cache' ][ '%self' ]
-  sysid   = cache[ 'sysid' ]
-  target  = cache[  sysid  ]
-  R       = target[ key ]
-  if handler?
-    if R is undefined
-      method ( error, R ) =>
-        return handler error if error?
-        @_set_cache key, R, save
-        handler null, R
-    else
-      handler null, R
-  else
-    if R is undefined
-      @_set_cache key, ( R = method() ), save
-    return R
-
-#-----------------------------------------------------------------------------------------------------------
-@_save_cache = ->
-  locator = @options[ 'cache' ][ 'locator' ]
-  cache   = @options[ 'cache' ][ '%self' ]
-  njs_fs.writeFileSync locator, JSON.stringify cache, null, '  '
-
-#-----------------------------------------------------------------------------------------------------------
-@_get_sysid = -> "#{njs_os.hostname()}:#{njs_os.platform()}"
-
+#
 #-----------------------------------------------------------------------------------------------------------
 @_compile_options = ->
   ### TAINT code duplication ###
   ### TAINT must insert '../' when used from `lib/` ###
-  @options                          = @_eval_coffee_file options_route
+  options_locator                   = require.resolve __dirname, options_route
+  options_home                      = njs_path.dirname options_locator
+  @options                          = OPTIONS.from_locator options_locator
+  @options[ 'home' ]                = options_home
   cache_route                       = @options[ 'cache' ][ 'route' ]
-  @options[ 'cache' ][ 'locator' ]  = cache_locator = njs_path.resolve __dirname, cache_route
+  @options[ 'cache' ][ 'locator' ]  = cache_locator = njs_path.resolve options_home, cache_route
   #.........................................................................................................
   unless njs_fs.existsSync cache_locator
     @options[ 'cache' ][ '%self' ] = {}
@@ -113,10 +64,10 @@ options_route             = './options.coffee'
   #.........................................................................................................
   @options[ 'locators' ] = {}
   for key, route of @options[ 'routes' ]
-    @options[ 'locators' ][ key ] = njs_path.resolve __dirname, route
+    @options[ 'locators' ][ key ] = njs_path.resolve options_home, route
   #.........................................................................................................
   debug '©ed8gv', JSON.stringify @options, null, '  '
-  @_update_cache()
+  CACHE.update options
 #...........................................................................................................
 @_compile_options()
 
@@ -181,7 +132,7 @@ options_route             = './options.coffee'
 @read_texlive_package_version = ( package_name, handler ) ->
   key     = "texlive-package-versions/#{package_name}"
   method  = ( done ) => @_read_texlive_package_version package_name, done
-  @_get_cache key, method, yes, handler
+  CACHE.get @options, key, method, yes, handler
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -248,10 +199,11 @@ options_route             = './options.coffee'
 #-----------------------------------------------------------------------------------------------------------
 @write_pdf = ( layout_info, handler ) ->
   #.........................................................................................................
-  pdf_command         = njs_path.join __dirname, 'pdf-from-tex.sh' # layout_info[ 'pdf-command'          ]
-  tmp_home            = __dirname # layout_info[ 'tmp-home'             ]
-  tex_locator         = njs_path.join __dirname, 'load-with-absolute-path.tex' # layout_info[ 'tex-locator'          ]
-  aux_locator         = njs_path.join __dirname, 'load-with-absolute-path.aux' # layout_info[ 'aux-locator'          ]
+  options_home        = @options[ 'home' ]
+  pdf_command         = njs_path.join options_home, 'pdf-from-tex.sh' # layout_info[ 'pdf-command'          ]
+  tmp_home            = options_home # layout_info[ 'tmp-home'             ]
+  tex_locator         = njs_path.join options_home, 'load-with-absolute-path.tex' # layout_info[ 'tex-locator'          ]
+  aux_locator         = njs_path.join options_home, 'load-with-absolute-path.aux' # layout_info[ 'aux-locator'          ]
   # pdf_source_locator  = layout_info[ 'pdf-source-locator'   ]
   # pdf_target_locator  = layout_info[ 'pdf-target-locator'   ]
   last_digest         = null
@@ -339,13 +291,6 @@ options_route             = './options.coffee'
 
 #-----------------------------------------------------------------------------------------------------------
 @main = ->
-  settings_tex_route = njs_path.join __dirname, 'mkts-settings.tex'
-  settings_tex = """
-  \\def\\foobar{example for a TeX-def macro}
-  \\newcommand{\\mktsPathsMktsHome}{/Volumes/Storage/io/jizura/tex-inputs}
-  \\newcommand{\\mktsPathsFontsHome}{/Volumes/Storage/io/jizura-fonts/fonts}
-  """
-  njs_fs.writeFileSync settings_tex_route, settings_tex
   @write_pdf null, ( error ) =>
     throw error if error?
     help "ok"
@@ -354,7 +299,6 @@ options_route             = './options.coffee'
 
 ############################################################################################################
 unless module.parent?
-  # help @_get_sysid()
   # @test_versions()
   # debug '©q9kwu', cached_settings = @_get_cached_settings()
   # help @_eval_coffee_file options_route

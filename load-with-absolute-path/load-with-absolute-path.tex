@@ -4,8 +4,8 @@
 
 \documentclass[a4paper,twoside]{book}
 \usepackage{.mkts-settings}
-\usepackage{mkts-local}
 \usepackage{\mktsPathsMktsHome/mkts2015-main}
+\usepackage{mkts-local}
 % \usepackage{\mktsMktsHome/mkts2015-fonts}
 % \usepackage{\mktsMktsHome/mkts2015-article}
 
@@ -13,17 +13,13 @@
 \XeTeXlinebreaklocale "zh"
 \XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
 
-% \newfontface\mktsFontsDejavuserifregular[Path=\mktsPathsFontsHome/]{DejaVuSerif.ttf}
-% \newfontface\mktsFontsUbunturegular[Path=\mktsPathsFontsHome/]{Ubuntu-R.ttf}
-% \newfontface\mktsFontsSunexta[Path=\mktsPathsFontsHome/]{sun-exta.ttf}
-% \newfontface\mktsFontsArplukaihk{AR PL UKai CN}
 
 \begin{document}
 
-{\mktsFontsDejavuserifregular\mktsSampletexten}\par
-{\mktsFontsDejavuserifregular\mktsSampletextzh}\par
-{\mktsFontsSunexta{}唐\mktsSampletextzh}\par
-% {\mktsFontsArplukaihk{}abcäöüß唐\mktsSampletextzh}\par
+{\mktsFontDejavuserif\mktsSampletexten}\par
+{\mktsFontCwtexqkaimedium\mktsSampletextzh}\par
+{\mktsFontSunexta{}\mktsSampletextzh}\par
+% {\mktsFontArplukaihk{}abcäöüß唐\mktsSampletextzh}\par
 This value read from settings.tex: \\foobar: \foobar\par
 
 

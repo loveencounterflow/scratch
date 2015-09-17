@@ -8,10 +8,6 @@ njs_util                  = require 'util'
 njs_path                  = require 'path'
 njs_fs                    = require 'fs'
 #...........................................................................................................
-# BAP                       = require 'coffeenode-bitsnpieces'
-# BNP                       = require 'coffeenode-bitsnpieces'
-# TYPES                     = require 'coffeenode-types'
-# TRM                       = require 'coffeenode-trm'
 CND                       = require 'cnd'
 rpr                       = CND.rpr
 badge                     = 'scratch'
@@ -31,8 +27,9 @@ after                     = suspend.after
 eventually                = suspend.eventually
 immediately               = suspend.immediately
 every                     = suspend.every
-# TEXT                      = require 'coffeenode-text'
-# Xregex                    = ( require 'xregexp' )[ 'XRegExp' ]
+
+
+a_new_function = ->
 
 #===========================================================================================================
 test_require_coffee = ->
