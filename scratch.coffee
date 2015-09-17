@@ -35,12 +35,29 @@ every                     = suspend.every
 # Xregex                    = ( require 'xregexp' )[ 'XRegExp' ]
 
 #===========================================================================================================
+test_require_coffee = ->
+  CS                       = require 'coffee-script'
+  route = '/Volumes/Storage/io/SCRATCH/load-with-absolute-path/options.coffee'
+  debug '©SOE29', rqr_route = require.resolve route
+  source = njs_fs.readFileSync rqr_route, encoding: 'utf-8'
+  # CND.dir CS
+  # source = """
+  #   @x = 42
+  #   """
+  debug '©jEOZd', CS.compile source, bare: true
+  # debug '©U4Zmb', eval CS.compile source, bare: true
+  debug '©U4Zmb', CS.eval source, bare: true
+  # debug '©YMF7F', CS.require route
+
+test_require_coffee()
+
+#===========================================================================================================
 test_chr = ->
   CHR                       = require 'coffeenode-chr'
   debug '©K6tf7', CHR.as_rsg '&cdp#x8deb;', input: 'xncr'
   debug '©K6tf7', CHR.as_rsg '&#x21b7a;', input: 'xncr'
   debug '©K6tf7', CHR.as_rsg '鿉', input: 'xncr'
-test_chr()
+# test_chr()
 
 #===========================================================================================================
 f = ->

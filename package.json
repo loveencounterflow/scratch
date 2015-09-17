@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "cnd": "^1.0.8",
+    "coffee-script": "^1.10.0",
     "coffeenode-chr": "^0.1.9",
     "coffeenode-suspend": "^0.1.11",
     "htmlparser2": "^3.8.3",
