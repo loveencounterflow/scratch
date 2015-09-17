@@ -48,17 +48,17 @@ CS                        = require 'coffee-script'
 #-----------------------------------------------------------------------------------------------------------
 @CACHE.update = ( options ) ->
   cache             = options[ 'cache' ][ '%self' ]
-  cache[ 'sysid' ]  = sysid = @CACHE._get_sysid()
+  cache[ 'sysid' ]  = sysid = @_get_sysid()
   unless cache[ sysid ]?
     sys_cache         = {}
     cache[ sysid ]    = sys_cache
-  @CACHE.save options
+  @save options
 
 #-----------------------------------------------------------------------------------------------------------
 @CACHE.set = ( options, key, value, save = yes ) ->
   target          = options[ 'cache' ][ '%self' ][ options[ 'cache' ][ '%self' ][ 'sysid' ] ]
   target[ key ]  = value
-  @CACHE.save options if save?
+  @save options if save?
   return null
 
 #-----------------------------------------------------------------------------------------------------------
@@ -71,13 +71,13 @@ CS                        = require 'coffee-script'
     if R is undefined
       method ( error, R ) =>
         return handler error if error?
-        @CACHE.set options, key, R, save
+        @set options, key, R, save
         handler null, R
     else
       handler null, R
   else
     if R is undefined
-      @CACHE.set options, key, ( R = method() ), save
+      @set options, key, ( R = method() ), save
     return R
 
 #-----------------------------------------------------------------------------------------------------------

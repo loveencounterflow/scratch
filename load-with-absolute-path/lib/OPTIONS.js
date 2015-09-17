@@ -38,12 +38,12 @@
   this.CACHE.update = function(options) {
     var cache, sys_cache, sysid;
     cache = options['cache']['%self'];
-    cache['sysid'] = sysid = this.CACHE._get_sysid();
+    cache['sysid'] = sysid = this._get_sysid();
     if (cache[sysid] == null) {
       sys_cache = {};
       cache[sysid] = sys_cache;
     }
-    return this.CACHE.save(options);
+    return this.save(options);
   };
 
   this.CACHE.set = function(options, key, value, save) {
@@ -54,7 +54,7 @@
     target = options['cache']['%self'][options['cache']['%self']['sysid']];
     target[key] = value;
     if (save != null) {
-      this.CACHE.save(options);
+      this.save(options);
     }
     return null;
   };
@@ -78,7 +78,7 @@
             if (error != null) {
               return handler(error);
             }
-            _this.CACHE.set(options, key, R, save);
+            _this.set(options, key, R, save);
             return handler(null, R);
           };
         })(this));
@@ -87,7 +87,7 @@
       }
     } else {
       if (R === void 0) {
-        this.CACHE.set(options, key, (R = method()), save);
+        this.set(options, key, (R = method()), save);
       }
       return R;
     }

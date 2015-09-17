@@ -47,7 +47,6 @@ options_route             = '../options.coffee'
 #
 #-----------------------------------------------------------------------------------------------------------
 @compile_options = ->
-  ### TAINT must insert '../' when used from `lib/` ###
   options_locator                   = require.resolve njs_path.resolve __dirname, options_route
   debug '©zNzKn', options_locator
   options_home                      = njs_path.dirname options_locator

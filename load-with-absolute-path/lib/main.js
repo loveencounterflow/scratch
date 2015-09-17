@@ -54,8 +54,6 @@
   ref = require('./OPTIONS'), CACHE = ref.CACHE, OPTIONS = ref.OPTIONS;
 
   this.compile_options = function() {
-
-    /* TAINT must insert '../' when used from `lib/` */
     var cache_locator, cache_route, key, options_home, options_locator, ref1, route;
     options_locator = require.resolve(njs_path.resolve(__dirname, options_route));
     debug('©zNzKn', options_locator);
