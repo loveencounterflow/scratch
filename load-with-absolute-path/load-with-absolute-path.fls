@@ -8,12 +8,8 @@ INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/base/book.cls
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/base/book.cls
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/base/bk10.clo
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/base/bk10.clo
-INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/mkts-local.sty
-INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/mkts-local.sty
-INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/mkts-settings.tex
-INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/mkts-settings.tex
-INPUT /Volumes/Storage/io/jizura/tex-inputs/mkts2015-main.sty
-INPUT /Volumes/Storage/io/jizura/tex-inputs/mkts2015-main.sty
+INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/.mkts-settings.sty
+INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/.mkts-settings.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/fontspec/fontspec.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/fontspec/fontspec.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/l3kernel/expl3.sty
@@ -57,6 +53,10 @@ INPUT /usr/local/texlive/2014/texmf-dist/tex/xelatex/xetex-def/xetex.def
 INPUT /usr/local/texlive/2014/texmf-dist/tex/xelatex/xetex-def/xetex.def
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/fontspec/fontspec.cfg
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/fontspec/fontspec.cfg
+INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/mkts-local.sty
+INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/mkts-local.sty
+INPUT /Volumes/Storage/io/jizura/tex-inputs/mkts2015-main.sty
+INPUT /Volumes/Storage/io/jizura/tex-inputs/mkts2015-main.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/leading/leading.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/leading/leading.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/tools/calc.sty
@@ -93,8 +93,6 @@ INPUT /usr/local/texlive/2014/texmf-dist/tex/generic/ifxetex/ifxetex.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/gloss-english.ldf
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/gloss-english.ldf
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/gloss-english.ldf
-INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/.mkts-fonts.sty
-INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/.mkts-fonts.sty
 INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
 INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
 OUTPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
