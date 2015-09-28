@@ -73,7 +73,6 @@
       route = ref1[key];
       this.options['locators'][key] = njs_path.resolve(options_home, route);
     }
-    debug('©ed8gv', JSON.stringify(this.options, null, '  '));
     return CACHE.update(options);
   };
 
@@ -226,7 +225,7 @@
   this.write_pdf = function(layout_info, handler) {
     var aux_locator, count, digest, last_digest, options_home, pdf_command, pdf_from_tex, tex_locator, tmp_home;
     options_home = this.options['home'];
-    pdf_command = njs_path.join(options_home, 'pdf-from-tex.sh');
+    pdf_command = njs_path.join(options_home, 'bin/pdf-from-tex.sh');
     tmp_home = options_home;
     tex_locator = njs_path.join(options_home, 'load-with-absolute-path.tex');
     aux_locator = njs_path.join(options_home, 'load-with-absolute-path.aux');

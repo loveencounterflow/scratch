@@ -65,7 +65,7 @@ options_route             = '../options.coffee'
   for key, route of @options[ 'routes' ]
     @options[ 'locators' ][ key ] = njs_path.resolve options_home, route
   #.........................................................................................................
-  debug '©ed8gv', JSON.stringify @options, null, '  '
+  # debug '©ed8gv', JSON.stringify @options, null, '  '
   CACHE.update options
 #...........................................................................................................
 @compile_options()
@@ -199,7 +199,7 @@ options_route             = '../options.coffee'
 @write_pdf = ( layout_info, handler ) ->
   #.........................................................................................................
   options_home        = @options[ 'home' ]
-  pdf_command         = njs_path.join options_home, 'pdf-from-tex.sh' # layout_info[ 'pdf-command'          ]
+  pdf_command         = njs_path.join options_home, 'bin/pdf-from-tex.sh' # layout_info[ 'pdf-command'          ]
   tmp_home            = options_home # layout_info[ 'tmp-home'             ]
   tex_locator         = njs_path.join options_home, 'load-with-absolute-path.tex' # layout_info[ 'tex-locator'          ]
   aux_locator         = njs_path.join options_home, 'load-with-absolute-path.aux' # layout_info[ 'aux-locator'          ]

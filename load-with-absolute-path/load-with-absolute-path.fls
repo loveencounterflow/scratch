@@ -75,6 +75,13 @@ INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/base/ifthen.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/base/ifthen.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/tools/array.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/tools/array.sty
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype.sty
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype.sty
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype-xetex.def
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype-xetex.def
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype.cfg
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype.cfg
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/microtype.cfg
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/polyglossia.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/polyglossia/polyglossia.sty
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/etoolbox/etoolbox.sty
@@ -98,4 +105,6 @@ INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-pat
 OUTPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/tipa/t3cmr.fd
 INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/tipa/t3cmr.fd
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/mt-LatinModernRoman.cfg
+INPUT /usr/local/texlive/2014/texmf-dist/tex/latex/microtype/mt-LatinModernRoman.cfg
 INPUT /Volumes/Storage/io/SCRATCH/load-with-absolute-path/load-with-absolute-path.aux
