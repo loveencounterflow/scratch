@@ -29,6 +29,85 @@ immediately               = suspend.immediately
 every                     = suspend.every
 
 
+############################################################################################################
+test_MKTS_raw_escaper = ->
+  MKTS        = require '/home/flow/io/jizura/lib/MKTS.js'
+  md_parser   = MKTS._new_markdown_parser()
+  #-----------------------------------------------------------------------------------------------------------
+  @_escape_command_fences = ( text ) ->
+    R = text
+    R = R.replace /♎/g,       '♎0'
+    R = R.replace /☛/g,       '♎a'
+    R = R.replace /☚/g,       '♎b'
+    R = R.replace /\\<\\</g,  '♎1'
+    R = R.replace /\\<</g,    '♎2'
+    R = R.replace /<\\</g,    '♎3'
+    R = R.replace /<</g,      '♎4'
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  @_unescape_command_fences_A = ( text ) ->
+    R = text
+    R = R.replace /♎4/g, '<<'
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  @_unescape_command_fences_B = ( text ) ->
+    R = text
+    R = R.replace /♎3/g, '<<'
+    R = R.replace /♎2/g, '<<'
+    R = R.replace /♎1/g, '<<'
+
+  #-----------------------------------------------------------------------------------------------------------
+  @_unescape_command_fences_C = ( text ) ->
+    R = text
+    R = R.replace /♎b/g, '☚'
+    R = R.replace /♎a/g, '☛'
+    R = R.replace /♎0/g, '♎'
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  @_replace_raw_spans = ( source ) ->
+    return source.replace raw_command_pattern, ( _, raw_content ) =>
+      id = raw_contents.length
+      raw_content  ?= ''
+      raw_content   = @_unescape_command_fences_A raw_content
+      raw_content   = @_unescape_command_fences_B raw_content
+      raw_content   = @_unescape_command_fences_C raw_content
+      raw_contents.push raw_content
+      return "☛#{id}☚"
+  raw_contents = []
+
+  source = """
+    helo <<(code>>*world*<<code)>>
+    helo <<(raw>>do **not** parse this<<raw)>>
+    <<(raw>><<raw)>>
+    """
+  raw_command_pattern = ///
+    (?: <<\(raw>>               <<raw\)>> ) |
+    (?: <<\(raw>> ( .*? [^\\] ) <<raw\)>> )
+    ///g
+  raw_id_pattern = ///
+    ☛ ( [ 0-9 ]+ ) ☚
+    ///g
+  source = @_escape_command_fences source
+  debug source  = md_parser.render source
+  help source   = @_replace_raw_spans source
+  source = @_unescape_command_fences_A source
+  source = @_unescape_command_fences_B source
+  # debug source
+  urge raw_contents
+  source = source.replace raw_id_pattern, ( _, id_txt ) =>
+    id = parseInt id_txt, 10
+    ### TAINT check for existence ###
+    R = raw_contents[ id ]
+    raw_contents[ id ] = 0
+    return R
+  source = @_unescape_command_fences_C source
+  help source
+test_MKTS_raw_escaper()
+
+
 #===========================================================================================================
 caller_identity = ->
   caller = null
@@ -48,7 +127,7 @@ caller_identity = ->
   g()
   g()
   g()
-caller_identity()
+# caller_identity()
 
 #===========================================================================================================
 MKTS_copy = ->
