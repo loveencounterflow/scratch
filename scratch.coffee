@@ -29,7 +29,97 @@ immediately               = suspend.immediately
 every                     = suspend.every
 
 
-a_new_function = ->
+#===========================================================================================================
+caller_identity = ->
+  caller = null
+  f = ->
+    # debug '©YRo3i', arguments.callee.caller
+    # debug '©YRo3i', arguments.callee.caller.caller
+    # debug '©YRo3i', arguments.callee.caller.caller.caller
+    caller = arguments.callee.caller
+    while caller?
+      debug '©1oA2s', caller.name, caller.length
+      # CND.dir caller
+      caller = caller.caller
+    # debug '©gVdzx', arguments.callee.caller, caller is arguments.callee.caller
+    # caller = arguments.callee.caller
+  g = ->
+    f()
+  g()
+  g()
+  g()
+caller_identity()
+
+#===========================================================================================================
+MKTS_copy = ->
+  MKTS = require '/Volumes/Storage/io/jizura/src/MKTS.coffee'
+  meta  = { foo: 'bar', }
+  d     = [ 1,2,3,meta, ]
+  dd    = MKTS.copy d
+  debug '©IcEM4', d, dd
+  debug '©IcEM4', d is dd
+  debug '©IcEM4', d[ 3 ] is dd[ 3 ]
+  meta2   = MKTS.copy meta
+  debug '©LRVAf', meta, meta2
+  debug '©LRVAf', meta is meta2
+# MKTS_copy()
+
+#===========================================================================================================
+find_duplicated_guides = ->
+  D = require 'pipedreams'
+  $ = D.remit.bind D
+  input   = njs_fs.createReadStream '/Volumes/Storage/io/jizura-datasources/data/5-derivatives/guide-pairs.txt'
+  output  = njs_fs.createWriteStream '/Volumes/Storage/io/jizura-datasources/data/5-derivatives/guide-pairs-duplicated.txt'
+  input
+    .pipe D.$split()
+    # .pipe D.$parse_csv headers: no
+    .pipe $ ( line, send ) => send line unless line.length is 0
+    .pipe $ ( line, send ) => send line unless line.startsWith '#'
+    .pipe $ ( line, send ) => send [ line, ( line.split '\t' )... ]
+    .pipe $ ( [ line, _, guides, glyph, ], send ) => send [ line, glyph, guides, ]
+    .pipe $ ( fields, send ) =>
+      [ line, glyph, guides, ] = fields
+      unless CND.isa_text guides
+        warn line, fields
+      send fields
+    .pipe $ ( [ line, glyph, guides, ], send ) =>
+      send [ line, glyph, ( Array.from guides )... ]
+    .pipe $ ( fields, send ) =>
+      [ line, glyph, guide_0, guide_1, ] = fields
+      send fields unless guide_0 is '一' or guide_1 is '一'
+    .pipe $ ( fields, send ) =>
+      [ line, glyph, guide_0, guide_1, ] = fields
+      send fields if guide_0 is guide_1
+    # .pipe D.$show()
+    .pipe $ ( [ line, glyph, guide_0, guide_1, ], send ) => send line + '\n'
+    .pipe output
+# find_duplicated_guides()
+
+#===========================================================================================================
+test_permutations = ->
+  get_pairs = ( list ) ->
+    ### TAINT allow or eliminate duplicates? ###
+    ### TAINT use all pairs and reversed pairs? ###
+    length  = list.length
+    R       = []
+    # return []             if length is 0
+    # return [ list[ 0 ], ] if length is 1
+    for i in [ 0 ... length - 1 ]
+      for j in [ i + 1 ... length ]
+        tuple = [ list[ i ], list[ j ], ]
+        ### TAINT should be sorted acc to strokeorder / guide nr, not codepoint ###
+        tuple.sort()
+        key = tuple.join ''
+        R.push key unless key in R
+        key = tuple[ 1 ] + tuple[ 0 ]
+        R.push key unless key in R
+    R.sort()
+    return R
+  help get_pairs [ '馬', '口', '冂', '口' ]
+  help get_pairs [ '馬', '口', ]
+  help get_pairs [ '馬', ]
+  help get_pairs []
+# test_permutations()
 
 #===========================================================================================================
 test_require_coffee = ->
@@ -46,7 +136,7 @@ test_require_coffee = ->
   debug '©U4Zmb', CS.eval source, bare: true
   # debug '©YMF7F', CS.require route
 
-test_require_coffee()
+# test_require_coffee()
 
 #===========================================================================================================
 test_chr = ->
