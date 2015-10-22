@@ -31,7 +31,7 @@ every                     = suspend.every
 
 ############################################################################################################
 test_MKTS_raw_escaper = ->
-  MKTS        = require '/home/flow/io/jizura/lib/MKTS.js'
+  MKTS        = require '../jizura/lib/MKTS.js'
   md_parser   = MKTS._new_markdown_parser()
   #-----------------------------------------------------------------------------------------------------------
   @_escape_command_fences = ( text ) ->
@@ -79,6 +79,7 @@ test_MKTS_raw_escaper = ->
   raw_contents = []
 
   source = """
+    helo <<(raw>>first<<raw)>>
     helo <<(code>>*world*<<code)>>
     helo <<(raw>>do **not** parse this<<raw)>>
     <<(raw>><<raw)>>
