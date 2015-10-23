@@ -58,26 +58,26 @@ MKTS                      = require '../jizura/lib/MKTS.js'
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT don't keep state here ###
-MKTS._raw_content_by_ids    = new Map()
-MKTS._raw_id_by_contents    = new Map()
-MKTS._command_by_ids        = new Map()
-MKTS._id_by_commands        = new Map()
+MKTS.XXX_raw_content_by_ids    = new Map()
+MKTS.XXX_raw_id_by_contents    = new Map()
+MKTS.XXX_command_by_ids        = new Map()
+MKTS.XXX_id_by_commands        = new Map()
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._raw_bracketed_pattern = ///
+MKTS.XXX_raw_bracketed_pattern = ///
   (?: ( ^ | [^\\] ) <<\( raw >>               << raw \)>> ) |
   (?: ( ^ | [^\\] ) <<\( raw >> ( .*? [^\\] ) << raw \)>> )
   ///g
-MKTS._raw_heredoc_pattern = ///
+MKTS.XXX_raw_heredoc_pattern = ///
   ( ^ | [^\\] ) <<! raw: ( [^\s>]* )>> ( .*? ) \2
   ///g
-MKTS._raw_id_pattern      = ///
+MKTS.XXX_raw_id_pattern      = ///
   \x11 ( [ 0-9 ]+ ) \x13
   ///g
-MKTS._command_id_pattern  = ///
+MKTS.XXX_command_id_pattern  = ///
   \x12 ( [ 0-9 ]+ ) \x13
   ///g
-MKTS._command_pattern = ///
+MKTS.XXX_command_pattern = ///
   ( ^ | [^\\] )
   (
     <<
@@ -89,36 +89,36 @@ MKTS._command_pattern = ///
   ///g
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._escape_raw_spans = ( text ) ->
+MKTS.XXX_escape_raw_spans = ( text ) ->
   R = text
-  R = @_escape_raw_and_command_escapes R
-  R = R.replace @_raw_bracketed_pattern, ( _, $1, $2, $3 ) =>
+  R = @XXX_escape_escape_chrs R
+  R = R.replace @XXX_raw_bracketed_pattern, ( _, $1, $2, $3 ) =>
     $1           ?= ''
     $2           ?= ''
     $1           += $2
     raw_content   = $3 ? ''
-    id            = @_raw_id_from_content 'raw', raw_content
+    id            = @XXX_raw_id_from_content 'raw', raw_content
     return "#{$1}\x11#{id}\x13"
-  R = R.replace @_raw_heredoc_pattern, ( _, $1, $2, $3 ) =>
+  R = R.replace @XXX_raw_heredoc_pattern, ( _, $1, $2, $3 ) =>
     raw_content   = $3 ? ''
-    id            = @_raw_id_from_content 'raw', raw_content
+    id            = @XXX_raw_id_from_content 'raw', raw_content
     return "#{$1}\x11#{id}\x13"
-  R = R.replace @_command_pattern, ( _, $1, $2, $3, $4, $5 ) =>
+  R = R.replace @XXX_command_pattern, ( _, $1, $2, $3, $4, $5 ) =>
     raw_content     = $2
     parsed_content  = [ $3, $4, $5, ]
-    id              = @_raw_id_from_content 'command', raw_content, parsed_content
+    id              = @XXX_raw_id_from_content 'command', raw_content, parsed_content
     return "#{$1}\x12#{id}\x13"
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._raw_id_from_content = ( collection_name, raw_content, parsed_content = null ) ->
+MKTS.XXX_raw_id_from_content = ( collection_name, raw_content, parsed_content = null ) ->
   switch collection_name
     when 'raw'
-      fragment_by_ids = @_raw_content_by_ids
-      id_by_fragments = @_raw_id_by_contents
+      fragment_by_ids = @XXX_raw_content_by_ids
+      id_by_fragments = @XXX_raw_id_by_contents
     when 'command'
-      fragment_by_ids = @_command_by_ids
-      id_by_fragments = @_id_by_commands
+      fragment_by_ids = @XXX_command_by_ids
+      id_by_fragments = @XXX_id_by_commands
     else throw new Error "unknown collection collection_name #{rpr collection_name}"
   unless ( R = id_by_fragments.get raw_content )?
     R = fragment_by_ids.size
@@ -127,14 +127,14 @@ MKTS._raw_id_from_content = ( collection_name, raw_content, parsed_content = nul
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._expand_commands = ( text ) ->
+MKTS.XXX_expand_commands = ( text ) ->
   is_command  = yes
   R           = []
-  for stretch in text.split @_command_id_pattern
+  for stretch in text.split @XXX_command_id_pattern
     is_command = not is_command
     if is_command
       id      = parseInt stretch, 10
-      command = @_command_by_ids.get id
+      command = @XXX_command_by_ids.get id
       ### should never happen: ###
       throw new Error "unknown ID #{rpr stretch}"                 unless command?
       throw new Error "not registered correctly: #{rpr stretch}"  unless CND.isa_list command
@@ -145,18 +145,18 @@ MKTS._expand_commands = ( text ) ->
   return R.join ''
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._unescape_raw_spans = ( text ) ->
+MKTS.XXX_unescape_raw_spans = ( text ) ->
   R = text
-  R = text.replace @_raw_id_pattern, ( _, id_txt ) =>
+  R = text.replace @XXX_raw_id_pattern, ( _, id_txt ) =>
     id  = parseInt id_txt, 10
-    R   = @_raw_content_by_ids.get id
+    R   = @XXX_raw_content_by_ids.get id
     throw new Error "unknown ID #{rpr id_txt}" unless R?
     return R
-  R = @_unescape_raw_escapes R
+  R = @XXX_unescape_escape_chrs R
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._escape_raw_and_command_escapes = ( text ) ->
+MKTS.XXX_escape_escape_chrs = ( text ) ->
   R = text
   R = R.replace /\x10/g, '\x10a'
   R = R.replace /\x11/g, '\x10r'
@@ -165,7 +165,7 @@ MKTS._escape_raw_and_command_escapes = ( text ) ->
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-MKTS._unescape_raw_escapes = ( text ) ->
+MKTS.XXX_unescape_escape_chrs = ( text ) ->
   R = text
   R = R.replace /\x10z/g, '\x13'
   R = R.replace /\x10r/g, '\x11'
@@ -202,6 +202,7 @@ test_MKTS_raw_escaper = ->
   #   \x01,\x02,\x03,\x04,\x05,\x06,\x0e,\x0f,\x10,\x11,\x12,\x13,\x14,\x15,\x16,\x17,\x18,\x19,\x1a,\x1b,\x1c,\x1d,\x1e,\x1f
   #   """
   help source
+<<<<<<< HEAD
   # debug '©RJgXu', source.match MKTS._raw_heredoc_pattern
   log 'sYt', rainbow source = MKTS._escape_raw_spans source
   log 'ySF', CND.plum  '©g8aFl raw_content ', MKTS._raw_content_by_ids
@@ -209,13 +210,17 @@ test_MKTS_raw_escaper = ->
   log 'tHe', hilite source = md_parser.render source
   log 'Uff', hilite source = MKTS._expand_commands source
   log 'uTD', hilite source = MKTS._unescape_raw_spans source
+  # debug '©RJgXu', source.match MKTS.XXX_raw_heredoc_pattern
+  log '©qnM1j', rainbow source = MKTS.XXX_escape_raw_spans source
+  log '©Rg4pE', CND.plum  '©g8aFl raw_content ', MKTS.XXX_raw_content_by_ids
+  log '©QP5XS', CND.steel '©g8aFl command     ', MKTS.XXX_command_by_ids
+  log '©KLwNa', rainbow source = md_parser.render source
+  log '©TsXcc', source.replace /([\x10-\x13])/g, ( _, $1 ) -> ( CND.red $1.codePointAt 0 ).toString 16
+  log '©XsxGS', rainbow source = MKTS.XXX_expand_commands source
+  log '©RdG7Y', rainbow source = MKTS.XXX_unescape_raw_spans source
+>>>>>>> 7d0f71c8631e0fbcaa06cef13e216c57a3dac4cb
 
 test_MKTS_raw_escaper()
 
 # help rpr ( String.fromCodePoint cid for cid in [ 0x00 .. 0x20 ] ).join ','
 # debug '©Soare', md_parser.render "\\a,\\b,\\c,\\d,\\e,\\f,\\g,\\h,\\i,\\j,\\k,\\l,\\m,\\n,\\o,\\p,\\q,\\r,\\s,\\t,\\u,\\v,\\w,\\x,\\y,\\z,", {}
-
-
-
-
-
