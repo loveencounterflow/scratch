@@ -173,6 +173,10 @@ MKTS._unescape_raw_escapes = ( text ) ->
   R = R.replace /\x10a/g, '\x10'
   return R
 
+hilite = ( text ) ->
+  ### TAINT matcher excludes 0x1b (ESC) which should likewise not occur in MD source ###
+  return text.replace /[\x00-\x08\x0b\x0c\x0d-\x1a\x1c\x1f\x7f\ufffd-\uffff]/g, ( $0 ) ->
+    CND.red ( $0.codePointAt 0 ).toString 16
 
 ############################################################################################################
 test_MKTS_raw_escaper = ->
@@ -199,12 +203,12 @@ test_MKTS_raw_escaper = ->
   #   """
   help source
   # debug '©RJgXu', source.match MKTS._raw_heredoc_pattern
-  log rainbow source = MKTS._escape_raw_spans source
-  log CND.plum  '©g8aFl raw_content ', MKTS._raw_content_by_ids
-  log CND.steel '©g8aFl command     ', MKTS._command_by_ids
-  log rainbow source = md_parser.render source
-  log rainbow source = MKTS._expand_commands source
-  log rainbow source = MKTS._unescape_raw_spans source
+  log 'sYt', rainbow source = MKTS._escape_raw_spans source
+  log 'ySF', CND.plum  '©g8aFl raw_content ', MKTS._raw_content_by_ids
+  log 'FDD', CND.steel '©g8aFl command     ', MKTS._command_by_ids
+  log 'tHe', hilite source = md_parser.render source
+  log 'Uff', hilite source = MKTS._expand_commands source
+  log 'uTD', hilite source = MKTS._unescape_raw_spans source
 
 test_MKTS_raw_escaper()
 
