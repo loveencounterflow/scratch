@@ -61,6 +61,131 @@ exec_and_eval_coffeescript = ->
 exec_and_eval_coffeescript()
 
 
+
+#===========================================================================================================
+pipedreams_with_fittings = ->
+  #-----------------------------------------------------------------------------------------------------------
+  D                         = require 'pipedreams'
+  $                         = D.remit.bind D
+  $async                    = D.remit_async.bind D
+
+  #-----------------------------------------------------------------------------------------------------------
+  D.$continue = ( stream ) ->
+    return $ ( data, send, end ) =>
+      stream.write data
+      if end?
+        stream.end()
+        end()
+
+  #-----------------------------------------------------------------------------------------------------------
+  D.$insert = ( stream ) ->
+    _send = null
+    _end  = null
+    stream.pipe D.$observe ( data ) ->
+      debug '@1', data
+      _send data
+    return $ ( data, send, end ) =>
+      _send = send
+      debug '@2', data
+      stream.write data
+      if end?
+        _end = end
+        stream.end()
+        end()
+
+  #-----------------------------------------------------------------------------------------------------------
+  D.create_xxx_fitting = ( settings ) ->
+    input   = settings?[ 'input' ] ? D.create_throughstream()
+    # middle  = D.create_throughstream()
+    output  = settings?[ 'input' ] ? D.create_throughstream()
+    ### TAINT should use `pipeline` ###
+    $nop    = => $ ( data, send ) =>
+      help rpr data
+      send data
+    input
+      # .pipe D.$insert middle
+      .pipe $ ( data, send ) =>
+        # urge '©81SzI', R[ 'middle' ]
+        R[ 'middle' ].write data#, send
+        # $nop() data, send
+      .pipe D.$show()
+      .pipe output
+    R =
+      '~isa':       'PIPEDREAMS/fitting'
+      middle:       $nop()
+      input:        input
+      output:       output
+    debug '©TpTDd', R
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  do ->
+    fitting     = D.create_xxx_fitting()
+    { input
+      output }  = fitting
+    # { input, first, middle, last, output, } = fitting
+    # fitting[ 'middle' ] = $ ( event, send ) =>
+    # debug '©ld3U8', $ ( event, send ) =>
+    #   debug '@3', event
+    #   send "xxx#{rpr event}xxx"
+    output
+      .pipe D.$show()
+    input.write n for n in [ 1 ... 10 ]
+
+pipedreams_with_fittings()
+
+
+#===========================================================================================================
+caller_identity = ->
+  caller = null
+  f = ->
+    debug '©YRo3i', arguments.callee
+    debug '©YRo3i', arguments.callee is caller_identity
+    debug '©YRo3i', arguments.callee is f
+    # debug '©YRo3i', arguments.callee.caller.caller
+    # debug '©YRo3i', arguments.callee.caller.caller.caller
+    caller = arguments.callee.caller
+    while caller?
+      debug '©1oA2s', caller.name, caller.length
+      # CND.dir caller
+      caller = caller.caller
+    # debug '©gVdzx', arguments.callee.caller, caller is arguments.callee.caller
+    # caller = arguments.callee.caller
+  g = ->
+    f()
+  g()
+  g()
+  g()
+# caller_identity()
+
+
+
+############################################################################################################
+test_markdown_it_footnotes = ->
+  md_source = """
+  Here is a footnote reference,[^1] and another,[^longnote]
+  and a third[^3] one.
+
+  [^1]: Here is the footnote.
+
+  [^3]: Third footnote.
+
+  [^longnote]: Here's one with multiple blocks.
+
+      Subsequent paragraphs are indented to show that they
+  belong to the previous footnote.
+
+  Here is an inline note.^[Inlines notes are easier to write, since
+  you don't have to pick an identifier and move down to type the
+  note.]
+  """
+  MKTS        = require '../jizura/lib/MKTS.js'
+  md_parser   = MKTS._new_markdown_parser()
+  environment = {}
+  urge md_parser.parse md_source, environment
+  help environment
+# test_markdown_it_footnotes()
+
 ############################################################################################################
 test_MKTS_raw_escaper = ->
   MKTS        = require '../jizura/lib/MKTS.js'
@@ -140,27 +265,6 @@ test_MKTS_raw_escaper = ->
   help source
 # test_MKTS_raw_escaper()
 
-
-#===========================================================================================================
-caller_identity = ->
-  caller = null
-  f = ->
-    # debug '©YRo3i', arguments.callee.caller
-    # debug '©YRo3i', arguments.callee.caller.caller
-    # debug '©YRo3i', arguments.callee.caller.caller.caller
-    caller = arguments.callee.caller
-    while caller?
-      debug '©1oA2s', caller.name, caller.length
-      # CND.dir caller
-      caller = caller.caller
-    # debug '©gVdzx', arguments.callee.caller, caller is arguments.callee.caller
-    # caller = arguments.callee.caller
-  g = ->
-    f()
-  g()
-  g()
-  g()
-# caller_identity()
 
 #===========================================================================================================
 MKTS_copy = ->
