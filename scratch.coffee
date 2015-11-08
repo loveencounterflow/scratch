@@ -28,6 +28,38 @@ eventually                = suspend.eventually
 immediately               = suspend.immediately
 every                     = suspend.every
 
+#===========================================================================================================
+exec_and_eval_coffeescript = ->
+  CS                        = require 'coffee-script'
+  VM                        = require 'vm'
+  local_filename            = 'myfile.js'
+  definitions               = new Map()
+  sandbox = {
+    d:            108
+    e:            "a variable"
+    urge:         CND.get_logger 'urge', '!!!'
+    help:         CND.get_logger 'help', '!!!'
+    # __filename:   local_filename
+    define:       ( pod ) ->
+      for key, value of pod
+        definitions.set key, value
+    }
+  sandbox[ '__sandbox' ] = sandbox
+  VM.createContext sandbox
+  cs_source = """
+    urge "helo from #{__filename}"
+    urge Array
+    d = 42
+    define
+      x:      'some value'
+    """
+  js_source = CS.compile cs_source, bare: true
+  debug '©U4Zmb', VM.runInContext js_source, sandbox, { filename: local_filename, }
+  debug '©YMF7F', sandbox
+  debug '©YMF7F', definitions
+
+exec_and_eval_coffeescript()
+
 
 ############################################################################################################
 test_MKTS_raw_escaper = ->
@@ -106,7 +138,7 @@ test_MKTS_raw_escaper = ->
     return R
   source = @_unescape_command_fences_C source
   help source
-test_MKTS_raw_escaper()
+# test_MKTS_raw_escaper()
 
 
 #===========================================================================================================
