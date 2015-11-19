@@ -28,6 +28,329 @@ eventually                = suspend.eventually
 immediately               = suspend.immediately
 every                     = suspend.every
 
+
+
+#===========================================================================================================
+HOLLERITH_select = ->
+  ASYNC             = require 'async'
+  HOLLERITH         = require '../hollerith'
+  D                 = require '../pipedreams'
+  $                 = D.remit.bind D
+  $async            = D.remit_async.bind D
+  #.........................................................................................................
+  ### https://github.com/dominictarr/level-live-stream ###
+  ### Alternative: https://github.com/Raynos/level-livefeed ###
+  create_livestream = require 'level-live-stream'
+
+  #-----------------------------------------------------------------------------------------------------------
+  HOLLERITH.$decode = ( db ) ->
+    ### TAINT should not require `db` as argument ###
+    return $ ( { key, value }, send ) =>
+      unless @_is_meta db, key
+        debug '©ΥΜΔΧΝ', rpr value
+        send [ ( @_decode_key db, key ), ( @_decode_value db, value ), ]
+
+  #-----------------------------------------------------------------------------------------------------------
+  HOLLERITH.$count = ( part_of_speech ) ->
+    unless part_of_speech in [ 's', 'p', 'o', ]
+      throw new Error "expected one of 's', 'p', 'o', got #{rpr part_of_speech}"
+    counts = {}
+    return $ ( phrase, send, end ) =>
+      if phrase?
+        throw new Error "xxx" unless phrase[ 0 ] is 'pos'
+        [ _, prd, obj, sbj, idx, ] = phrase
+        value = switch part_of_speech
+          when 's' then sbj
+          when 'p' then prd
+          when 'o' then obj
+        ### TAINT should properly check for inner/outer codepoint ###
+        unless sbj.startsWith '&'
+          counts[ value ] = ( counts[ value ] ? 0 ) + 1
+      if end?
+        send [ value, count, ] for value, count of counts
+        end()
+
+  #-----------------------------------------------------------------------------------------------------------
+  HOLLERITH.prune = ( me, prefix, filter, handler ) ->
+    db_substrate  = me[ '%self' ]
+    query         = { prefix, star: '*', }
+    input         = @create_phrasestream me, query
+    input
+      .pipe $async ( phrase, done ) =>
+        unless filter phrase
+          key     = phrase[ ... 3 ]
+          debug '©ΕΦΩΘΥ', "deleting", key
+          key_bfr = @_encode_key db_substrate, key
+          db_substrate.del key_bfr, ( error ) =>
+            throw error if error?
+            done()
+        else
+          done phrase
+      .pipe D.$show()
+      .pipe D.$on_end => handler null
+    return null
+
+  #-----------------------------------------------------------------------------------------------------------
+  create_resultstream = ( db ) ->
+    db_substrate  = db[ '%self' ]
+    query         = HOLLERITH._query_from_prefix db, [ 'spo', ]
+    #.........................................................................................................
+    ### see https://github.com/dominictarr/level-live-stream/#options ###
+    settings =
+      tail: yes
+      old : no
+      min : query[ 'gte' ]
+      max : query[ 'lte' ]
+    #.........................................................................................................
+    R = create_livestream db_substrate, settings
+    R = R
+      .pipe HOLLERITH.$decode db
+      .pipe $ ( facet, send ) =>
+        [ [ _, sbj, _, ], _, ] = facet
+        send sbj
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  search = ( source_db, target_db, prefix, handler ) ->
+    ### TAINT use of star not correct ###
+    query             = { prefix, star: '*', }
+    input             = HOLLERITH.create_phrasestream source_db, query
+    accumulator       = D.create_throughstream()
+    # accumulator.on 'end', =>
+    accumulator
+      .pipe $async ( [ sbj, prd, obj, ], done ) =>
+        sub_prefix  = [ 'spo', sbj, prd, ]
+        sub_query   = { prefix: sub_prefix, fallback: null, }
+        HOLLERITH.read_one_phrase target_db, sub_query, ( error, result ) =>
+          return done.error error if error?
+          if result?
+            result.splice 0, 1
+            result[ 2 ] += +1
+            done result
+          else
+            done [ sbj, prd, obj + 1, ]
+      .pipe HOLLERITH.$write target_db, unique: no, solids: [ 'count', ], loners: [ 'count', ]
+      .pipe D.$on_end => handler null
+    #.........................................................................................................
+    input
+      # .pipe HOLLERITH.$count 'o'
+      # .pipe D.$sort ( [ value_a, count_a, ], [ value_b, count_b, ] ) =>
+      #   return -1 if count_a > count_b
+      #   return +1 if count_a < count_b
+      #   return -1 if value_a > value_b
+      #   return +1 if value_a < value_b
+      #   return  0
+      # .pipe D.$show()
+      .pipe $ ( phrase, send ) =>
+        [ _, prd, obj, sbj, idx, ] = phrase
+        return if sbj.startsWith '&'
+        ### TAINT count must go to value ###
+        send [ sbj, 'count', 0, ]
+      .pipe accumulator
+
+  #-----------------------------------------------------------------------------------------------------------
+  step ( resume ) =>
+    #.........................................................................................................
+    home              = njs_path.resolve __dirname, '../jizura-datasources'
+    source_route      = njs_path.resolve home, 'data/leveldb-v2'
+    target_route      = njs_path.resolve home, '/tmp/results'
+    target_db_size    = 1e6
+    ds_options        = require njs_path.resolve home, 'options'
+    source_db         = HOLLERITH.new_db source_route
+    target_db         = HOLLERITH.new_db target_route, size: target_db_size, create: yes
+    yield HOLLERITH.clear target_db, resume
+    #.........................................................................................................
+    tasks = []
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '氵', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '井', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '太', ], done
+    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '𠦒', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '爻', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '鳥', ], done
+    ASYNC.parallel tasks, ( error ) =>
+      filter = ( phrase ) =>
+        [ phrasetype, sbj, prd, count, ] = phrase
+        unless ( phrasetype is 'spo' ) and ( prd is 'count' ) and ( CND.isa_number count )
+          throw new Error "expected SPO phrase with predicate 'count', got #{rpr phrase}"
+        return count >= tasks.length
+      HOLLERITH.prune target_db, [ 'spo', ], filter, ( error ) =>
+        debug '©ΖΛΜΤΞ'
+    #.........................................................................................................
+    confluence        = create_resultstream target_db
+    # confluence
+    #   .pipe D.$show()
+    #.........................................................................................................
+    return null
+
+
+HOLLERITH_select()
+
+#===========================================================================================================
+PIPEDREAMS_collect = ->
+  D                         = require 'pipedreams'
+  $                         = D.remit.bind D
+  $async                    = D.remit_async.bind D
+  text = """
+    Just in order to stress it, a 'character’ in this chart is equivalent to 'a Unicode
+    codepoint’, so for example 馬 and 马 count as two characters, and 關, 关, 関, 闗, 𨶹 count
+    as five characters. Dictionaries will list 馬马 as 'one character with two variants’
+    and 關关関闗𨶹 as 'one character with five variants’, but that’s not what we’re counting
+    here.
+    """
+  #-----------------------------------------------------------------------------------------------------------
+  input = D.stream_from_text text
+  input.pipe D.$show()
+  input.resume()
+
+  #-----------------------------------------------------------------------------------------------------------
+  input = D.stream_from_text text
+  input
+    .pipe D.$split()
+    .pipe D.$join '--\n'
+    .pipe D.$observe ( data ) -> urge data
+  input.resume()
+
+# PIPEDREAMS_collect()
+
+#===========================================================================================================
+nice_text_rpr = ->
+  text = """
+    foo \u0010\u0012\u0015
+    bar""\"
+    """
+  debug '©ehFoE', rpr text
+  R = text
+  R = R.replace /[\x00-\x09\x0b-\x19]/g, ( $0 ) ->
+    cid_hex = ( $0.codePointAt 0 ).toString 16
+    cid_hex = '0' + cid_hex if cid_hex.length is 1
+    return "\\x#{cid_hex}"
+  R = R.replace /"/g, '\\"'
+  R = '"""' + R + '"""'
+  probe = """foo \x10\x12\x15
+    bar\"\"\""""
+  debug '©0sWgm', text is probe
+  # debug '©4JQls', '\n'.codePointAt 0
+  echo CND.white R
+
+# nice_text_rpr()
+
+#===========================================================================================================
+content_addressable_storage = ->
+  #-----------------------------------------------------------------------------------------------------------
+  misfit              = Symbol 'misfit'
+
+  #-----------------------------------------------------------------------------------------------------------
+  CAS = {}
+  CAS.new_store = ->
+    R               =
+      '~isa':           'CAS/store'
+      'id-by-content':  new Map()
+      'index':          []
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  CAS.set = ( me, content ) ->
+    return R if ( R = me[ 'id-by-content' ].get content )?
+    R = me[ 'index' ].length
+    me[ 'id-by-content' ].set content, R
+    me[ 'index' ].push content
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  CAS.get = ( me, id, fallback = misfit ) ->
+    return R if ( R = me[ 'index' ][ id ] )?
+    return fallback unless fallback is misfit
+    throw new Error "unknown ID #{rpr id}"
+
+  debug '©HpxVZ', store = CAS.new_store()
+  debug '©FU7LE (1)', CAS.set store, 42
+  debug '©FU7LE (2)', CAS.set store, 'more'
+  debug '©FU7LE (3)', CAS.set store, 'more of this'
+  debug '©FU7LE (4)', CAS.set store, 'more of this'
+  debug '©FU7LE (5)', CAS.set store, [ 32, ]
+  debug '©FU7LE (6)', CAS.set store, [ 32, ]
+  debug '©FU7LE (7)', CAS.set store, d = [ 32, ]
+  debug '©FU7LE (8)', CAS.set store, d
+  debug '©FU7LE (9)', CAS.set store, 'new'
+  debug '©n9l1r (10)', store
+  debug '©ZsxDc (11)', CAS.get store, 1
+  # debug '©ZsxDc (12)', CAS.get store, [ 32, ], 'XXX'
+  # debug '©ZsxDc (13)', CAS.get store, d
+  debug '©ZsxDc (14)', CAS.get store, 10, 'XXX'
+  debug '©ZsxDc (15)', CAS.get store, 10
+
+# content_addressable_storage()
+
+#===========================================================================================================
+pipedreams_duplex = ->
+  #-----------------------------------------------------------------------------------------------------------
+  D                         = require 'pipedreams'
+  $                         = D.remit.bind D
+  $async                    = D.remit_async.bind D
+
+  #-----------------------------------------------------------------------------------------------------------
+  do ->
+    create_frob_fitting = ( settings ) ->
+      multiply      = $ ( data, send ) => send data * 2
+      add           = $ ( data, send ) => send data + 2
+      square        = $ ( data, send ) => send data ** 2
+      unsquared     = D.create_throughstream()
+      #.......................................................................................................
+      inputs        = { add, }
+      outputs       = { unsquared, }
+      transforms    = [ multiply, add, unsquared, square, ]
+      #.......................................................................................................
+      return D.create_fitting transforms, { inputs, outputs, }
+
+    #---------------------------------------------------------------------------------------------------------
+    fitting = create_frob_fitting()
+    { input, output, inputs, outputs, } = fitting
+    outputs[ 'unsquared' ].pipe $ ( data, send ) -> help '@unsquared:', data
+    output
+      .pipe $ ( data, send ) ->
+        inputs[ 'add' ].write -10 if data is 100
+        send data
+      .pipe D.$show()
+    input.write n for n in [ 1 ... 10 ]
+
+# pipedreams_duplex()
+
+#===========================================================================================================
+pipedreams_with_fittings = ->
+  #-----------------------------------------------------------------------------------------------------------
+  D                         = require 'pipedreams'
+  $                         = D.remit.bind D
+  $async                    = D.remit_async.bind D
+
+  #-----------------------------------------------------------------------------------------------------------
+  do ->
+    create_frob_fitting = ( settings ) ->
+      multiply      = $ ( data, send ) => send data * 2
+      add           = $ ( data, send ) => send data + 2
+      square        = $ ( data, send ) => send data ** 2
+      unsquared     = D.create_throughstream()
+      #.......................................................................................................
+      inputs        = { add, }
+      outputs       = { unsquared, }
+      transforms    = [ multiply, add, unsquared, square, ]
+      #.......................................................................................................
+      return D.create_fitting transforms, { inputs, outputs, }
+
+    #---------------------------------------------------------------------------------------------------------
+    fitting = create_frob_fitting()
+    { input, output, inputs, outputs, } = fitting
+    outputs[ 'unsquared' ].pipe $ ( data, send ) -> help '@unsquared:', data
+    output
+      .pipe $ ( data, send ) ->
+        inputs[ 'add' ].write -10 if data is 100
+        send data
+      .pipe D.$show()
+    input.write n for n in [ 1 ... 10 ]
+
+# pipedreams_with_fittings()
+
+
 #===========================================================================================================
 exec_and_eval_coffeescript = ->
   CS                        = require 'coffee-script'
@@ -58,82 +381,7 @@ exec_and_eval_coffeescript = ->
   debug '©YMF7F', sandbox
   debug '©YMF7F', definitions
 
-exec_and_eval_coffeescript()
-
-
-
-#===========================================================================================================
-pipedreams_with_fittings = ->
-  #-----------------------------------------------------------------------------------------------------------
-  D                         = require 'pipedreams'
-  $                         = D.remit.bind D
-  $async                    = D.remit_async.bind D
-
-  #-----------------------------------------------------------------------------------------------------------
-  D.$continue = ( stream ) ->
-    return $ ( data, send, end ) =>
-      stream.write data
-      if end?
-        stream.end()
-        end()
-
-  #-----------------------------------------------------------------------------------------------------------
-  D.$insert = ( stream ) ->
-    _send = null
-    _end  = null
-    stream.pipe D.$observe ( data ) ->
-      debug '@1', data
-      _send data
-    return $ ( data, send, end ) =>
-      _send = send
-      debug '@2', data
-      stream.write data
-      if end?
-        _end = end
-        stream.end()
-        end()
-
-  #-----------------------------------------------------------------------------------------------------------
-  D.create_xxx_fitting = ( settings ) ->
-    input   = settings?[ 'input' ] ? D.create_throughstream()
-    # middle  = D.create_throughstream()
-    output  = settings?[ 'input' ] ? D.create_throughstream()
-    ### TAINT should use `pipeline` ###
-    $nop    = => $ ( data, send ) =>
-      help rpr data
-      send data
-    input
-      # .pipe D.$insert middle
-      .pipe $ ( data, send ) =>
-        # urge '©81SzI', R[ 'middle' ]
-        R[ 'middle' ].write data#, send
-        # $nop() data, send
-      .pipe D.$show()
-      .pipe output
-    R =
-      '~isa':       'PIPEDREAMS/fitting'
-      middle:       $nop()
-      input:        input
-      output:       output
-    debug '©TpTDd', R
-    return R
-
-  #-----------------------------------------------------------------------------------------------------------
-  do ->
-    fitting     = D.create_xxx_fitting()
-    { input
-      output }  = fitting
-    # { input, first, middle, last, output, } = fitting
-    # fitting[ 'middle' ] = $ ( event, send ) =>
-    # debug '©ld3U8', $ ( event, send ) =>
-    #   debug '@3', event
-    #   send "xxx#{rpr event}xxx"
-    output
-      .pipe D.$show()
-    input.write n for n in [ 1 ... 10 ]
-
-pipedreams_with_fittings()
-
+# exec_and_eval_coffeescript()
 
 #===========================================================================================================
 caller_identity = ->
