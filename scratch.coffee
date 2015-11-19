@@ -45,10 +45,12 @@ HOLLERITH_select = ->
   #-----------------------------------------------------------------------------------------------------------
   HOLLERITH.$decode = ( db ) ->
     ### TAINT should not require `db` as argument ###
-    return $ ( { key, value }, send ) =>
+    return $ ( batch_entry, send ) =>
+      { key, value, } = batch_entry
       unless @_is_meta db, key
-        debug '©ΥΜΔΧΝ', rpr value
-        send [ ( @_decode_key db, key ), ( @_decode_value db, value ), ]
+        batch_entry[ 'key'   ] = @_decode_key   db, key
+        batch_entry[ 'value' ] = @_decode_value db, value unless value is undefined
+        send batch_entry
 
   #-----------------------------------------------------------------------------------------------------------
   HOLLERITH.$count = ( part_of_speech ) ->
@@ -79,7 +81,7 @@ HOLLERITH_select = ->
       .pipe $async ( phrase, done ) =>
         unless filter phrase
           key     = phrase[ ... 3 ]
-          debug '©ΕΦΩΘΥ', "deleting", key
+          # debug '©ΕΦΩΘΥ', "deleting", key
           key_bfr = @_encode_key db_substrate, key
           db_substrate.del key_bfr, ( error ) =>
             throw error if error?
@@ -104,8 +106,12 @@ HOLLERITH_select = ->
     #.........................................................................................................
     R = create_livestream db_substrate, settings
     R = R
+      # .pipe $ ( batch_entry, send ) =>
+        # unless batch_entry[ 'type' ] in [ 'del', ]
+        #   send batch_entry
       .pipe HOLLERITH.$decode db
       .pipe $ ( facet, send ) =>
+        facet = [ facet[ 'key' ], facet[ 'value' ], ] if facet[ 'type' ]?
         [ [ _, sbj, _, ], _, ] = facet
         send sbj
     return R
@@ -162,10 +168,10 @@ HOLLERITH_select = ->
     #.........................................................................................................
     tasks = []
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', ], done
-    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '氵', ], done
+    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '氵', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '井', ], done
-    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '太', ], done
-    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '𠦒', ], done
+    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '太', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '𠦒', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '爻', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '鳥', ], done
     ASYNC.parallel tasks, ( error ) =>
