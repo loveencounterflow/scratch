@@ -144,7 +144,8 @@ HOLLERITH_select = ->
           else
             done [ sbj, prd, obj + 1, ]
       .pipe D.$count ( count ) => help "#{rpr prefix}: #{count}"
-      .pipe HOLLERITH.$write target_db, unique: no, solids: [ 'count', ], loners: [ 'count', ]
+      .pipe HOLLERITH.$write target_db, unique: no, solids: [ 'count', ]
+      # .pipe HOLLERITH.$write target_db, unique: no, solids: [ 'count', ], loners: [ 'count', ]
       .pipe D.$on_end => handler null
     #.........................................................................................................
     input
@@ -181,11 +182,11 @@ HOLLERITH_select = ->
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '土', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '亻', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '口', ], done
-    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '井', ], done
-    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '太', ], done
+    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '井', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '太', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '𠦒', ], done
-    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '爻', ], done
-    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '鳥', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '爻', ], done
+    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '鳥', ], done
     ASYNC.parallel tasks, ( error ) =>
       filter = ( phrase ) =>
         [ phrasetype, sbj, prd, count, ] = phrase
