@@ -74,6 +74,7 @@ HOLLERITH_select = ->
 
   #-----------------------------------------------------------------------------------------------------------
   HOLLERITH.prune = ( me, prefix, filter, handler ) ->
+    end_          = null
     db_substrate  = me[ '%self' ]
     query         = { prefix, star: '*', }
     input         = @create_phrasestream me, query
@@ -81,15 +82,22 @@ HOLLERITH_select = ->
       .pipe $async ( phrase, done ) =>
         unless filter phrase
           key     = phrase[ ... 3 ]
-          # debug '©ΕΦΩΘΥ', "deleting", key
           key_bfr = @_encode_key db_substrate, key
-          db_substrate.del key_bfr, ( error ) =>
+          # debug "open process count: #{count}"
+          db_substrate.batch [{ type: 'del', key: key_bfr, }], ( error ) =>
             throw error if error?
+            input.resume()
             done()
+          input.pause()
         else
           done phrase
-      .pipe D.$show()
-      .pipe D.$on_end => handler null
+      # .pipe D.$show()
+      .pipe D.$count ( count ) => help "intersection: #{count}"
+      .pipe D.$on_end ( end ) =>
+        # debug "open process count: #{count}"
+        end_ = end
+        # setTimeout ( => handler null ), 2000
+        # handler null
     return null
 
   #-----------------------------------------------------------------------------------------------------------
@@ -135,6 +143,7 @@ HOLLERITH_select = ->
             done result
           else
             done [ sbj, prd, obj + 1, ]
+      .pipe D.$count ( count ) => help "#{rpr prefix}: #{count}"
       .pipe HOLLERITH.$write target_db, unique: no, solids: [ 'count', ], loners: [ 'count', ]
       .pipe D.$on_end => handler null
     #.........................................................................................................
@@ -168,11 +177,14 @@ HOLLERITH_select = ->
     #.........................................................................................................
     tasks = []
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', ], done
-    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '氵', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '氵', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '土', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '亻', ], done
+    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '口', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '井', ], done
     tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '太', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '𠦒', ], done
-    # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '爻', ], done
+    tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '爻', ], done
     # tasks.push ( done ) => search source_db, target_db, [ 'pos', 'guide/has/uchr', '鳥', ], done
     ASYNC.parallel tasks, ( error ) =>
       filter = ( phrase ) =>
