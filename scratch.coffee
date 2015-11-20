@@ -86,16 +86,17 @@ HOLLERITH_select = ->
           # debug "open process count: #{count}"
           db_substrate.batch [{ type: 'del', key: key_bfr, }], ( error ) =>
             throw error if error?
-            input.resume()
+            # input.resume()
             done()
-          input.pause()
+          # input.pause()
         else
-          done phrase
+          immediately => done phrase
       # .pipe D.$show()
       .pipe D.$count ( count ) => help "intersection: #{count}"
       .pipe D.$on_end ( end ) =>
         # debug "open process count: #{count}"
-        end_ = end
+        # end_ = end
+        immediately => handler null
         # setTimeout ( => handler null ), 2000
         # handler null
     return null
