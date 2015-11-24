@@ -29,6 +29,48 @@ immediately               = suspend.immediately
 every                     = suspend.every
 
 
+#===========================================================================================================
+interactive_cli = ->
+  inquirer = require './Inquirer.js'
+  console.log 'Hi, welcome to Node Pizza'
+  filenames = njs_fs.readdirSync njs_path.resolve __dirname, './node_modules/'
+  dialogue = [
+  #   type: 'confirm'
+  #   name: 'toBeDelivered'
+  #   message: 'Is it for a delivery'
+  #   default: false
+  # ,
+    # type: 'list'
+    type: 'checkbox'
+    name: 'size'
+    message: 'Select files'
+    choices: filenames
+    pageSize: 10
+    disabled: ( P... ) -> debug '©ΥΡΠΣΤ', P; return true
+    # filter: (val) ->
+    #   val.toLowerCase()
+  ]
+  prompt = inquirer.prompt dialogue, ( answers ) ->
+    debug '©ΞΕΡΒΧ', answers
+  onEachAnswer  = ( P... ) -> help 'onEachAnswer', P
+  onError       = ( P... ) -> warn 'onError', P
+  onComplete    = ( P... ) -> urge 'onComplete', P
+  prompt.process.subscribe onEachAnswer, onError, onComplete
+  CND.dir prompt
+  # { Rx } = require 'rx-lite'
+  # prompts = Rx.Observable.create(( obs ) ->
+  #   obs.onNext {}
+  #   setTimeout ->
+  #     obs.onNext {}
+  #     obs.onCompleted()
+  #     return
+  #   return
+  # )
+  # inquirer.prompt prompts
+  # inquirer.prompt(prompts).process.subscribe onEachAnswer, onError, onComplete
+
+interactive_cli()
+
 
 #===========================================================================================================
 HOLLERITH_select = ->
@@ -204,7 +246,7 @@ HOLLERITH_select = ->
     return null
 
 
-HOLLERITH_select()
+# HOLLERITH_select()
 
 #===========================================================================================================
 PIPEDREAMS_collect = ->
