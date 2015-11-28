@@ -51,7 +51,7 @@ mkts_backslash_escaping = ->
   text = """
     some << unlicensed >> stuff here.
     some more \\\\<< unlicensed \\\\>> stuff here.
-    some \\<< licensed \\>> stuff here.
+    some \\<< licensed \\>> stuff here, and <\\<
     The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
     """
   # text = ""
@@ -59,18 +59,12 @@ mkts_backslash_escaping = ->
   # text = "x"
   debug '©93543', rpr text
   _ = []
-  colors = [
-    CND.red
-    CND.blue
-    CND.green
-    CND.steel
-    ]
   for pattern, pattern_idx in @backslash_patterns
     is_plain  = no
     stretches = []
     for stretch in text.split pattern
       is_plain = not is_plain
-      _.push ( if is_plain then ( CND.white ) else ( colors[ pattern_idx ] ) ) stretch
+      _.push ( if is_plain then CND.white else CND.rainbow ) stretch
     _.push '\n'
     _.push '\n'
   log '\n' + ( _.join '' ) + '\n'
