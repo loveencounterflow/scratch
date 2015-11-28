@@ -30,6 +30,19 @@ every                     = suspend.every
 
 
 #===========================================================================================================
+try_catch_else = ->
+  d = try
+    x
+  catch error
+    warn error[ 'message' ]
+    42
+  help "ok"
+  urge rpr d
+
+try_catch_else()
+
+
+#===========================================================================================================
 interactive_cli = ->
   inquirer = require './Inquirer.js'
   console.log 'Hi, welcome to Node Pizza'
@@ -69,7 +82,7 @@ interactive_cli = ->
   # inquirer.prompt prompts
   # inquirer.prompt(prompts).process.subscribe onEachAnswer, onError, onComplete
 
-interactive_cli()
+# interactive_cli()
 
 
 #===========================================================================================================
