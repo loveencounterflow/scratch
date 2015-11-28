@@ -30,6 +30,89 @@ every                     = suspend.every
 
 
 #===========================================================================================================
+mkts_backslash_escaping = ->
+  @backslash_patterns = [
+    ///
+    ( \\\\ )
+    ///g
+  ,
+    ///
+    ( \\<< )
+    ///g
+  ,
+    ///
+    ( <\\< )
+    ///g
+  ,
+    ///
+    ( \\ )
+    ///g
+    ]
+  text = """
+    some << unlicensed >> stuff here.
+    some more \\\\<< unlicensed \\\\>> stuff here.
+    some \\<< licensed \\>> stuff here.
+    The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
+    """
+  # text = ""
+  # text = "<<"
+  # text = "x"
+  debug '©93543', rpr text
+  _ = []
+  colors = [
+    CND.red
+    CND.blue
+    CND.green
+    CND.steel
+    ]
+  for pattern, pattern_idx in @backslash_patterns
+    is_plain  = no
+    stretches = []
+    for stretch in text.split pattern
+      is_plain = not is_plain
+      _.push ( if is_plain then ( CND.white ) else ( colors[ pattern_idx ] ) ) stretch
+    _.push '\n'
+    _.push '\n'
+  log '\n' + ( _.join '' ) + '\n'
+  for pattern, pattern_idx in @backslash_patterns
+    text = text.replace pattern, "##{pattern_idx};"
+  log '\n' + text
+
+mkts_backslash_escaping()
+
+#===========================================================================================================
+mkts_illegal_patterns = ->
+  @illegal_patterns = [
+    ///                           # After applying all other macro patterns, treat as error: pattern that
+    ( ^ | [^ \\ ] )               # starts either at the first chr or a chr other than backslash
+    ( << | >> )                   # then: either two left or two right pointy brackets.
+    ///g
+    ]
+  text = """
+    some << unlicensed >> stuff here.
+
+    some \\<< licensed \\>> stuff here.
+    """
+  # text = ""
+  # text = "<<"
+  # text = "x"
+  for pattern in @illegal_patterns
+    is_plain  = no
+    stretches = []
+    for raw_stretch, idx in text.split pattern
+      if ( idx % 3 ) is 1
+        stretches[ stretches.length - 1 ] += raw_stretch
+      else
+        stretches.push raw_stretch
+    is_plain  = no
+    for stretch in stretches
+      is_plain = not is_plain
+      info '©54249', is_plain, rpr stretch
+      # if is_plain
+
+# mkts_illegal_patterns()
+
+#===========================================================================================================
 interactive_cli = ->
   inquirer = require './Inquirer.js'
   console.log 'Hi, welcome to Node Pizza'
@@ -69,7 +152,7 @@ interactive_cli = ->
   # inquirer.prompt prompts
   # inquirer.prompt(prompts).process.subscribe onEachAnswer, onError, onComplete
 
-interactive_cli()
+# interactive_cli()
 
 
 #===========================================================================================================
