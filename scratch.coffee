@@ -31,27 +31,33 @@ every                     = suspend.every
 
 #===========================================================================================================
 mkts_backslash_escaping = ->
-  @backslash_patterns = [
-    ///
-    ( \\\\ )
-    ///g
-  ,
-    ///
-    ( \\<< )
-    ///g
-  ,
-    ///
-    ( <\\< )
-    ///g
-  ,
-    ///
-    ( \\ )
-    ///g
-    ]
+  ### TAINT not compatible with 32bit codepoins ###
+  @backslash_pattern = /// \\ ( . ) ///g
+  # ,
+  #   ///
+  #   ( \\<< )
+  #   ///g
+  # ,
+  #   ///
+  #   ( <\\< )
+  #   ///g
+  # ,
+  #   ///
+  #   ( \\>> )
+  #   ///g
+  # ,
+  #   ///
+  #   ( >\\> )
+  #   ///g
+  # ,
+  #   ///
+  #   ( \\ )
+  #   ///g
+    # ]
   text = """
-    some << unlicensed >> stuff here.
-    some more \\\\<< unlicensed \\\\>> stuff here.
-    some \\<< licensed \\>> stuff here, and <\\<
+    some <<unlicensed>> stuff here.
+    some more \\\\<<unlicensed\\\\>> stuff here.
+    some \\<<licensed\\>> stuff here, and <\\<
     The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
     """
   # text = ""
@@ -59,18 +65,22 @@ mkts_backslash_escaping = ->
   # text = "x"
   debug '©93543', rpr text
   _ = []
-  for pattern, pattern_idx in @backslash_patterns
-    is_plain  = no
-    stretches = []
-    for stretch in text.split pattern
-      is_plain = not is_plain
-      _.push ( if is_plain then CND.white else CND.rainbow ) stretch
-    _.push '\n'
-    _.push '\n'
-  log '\n' + ( _.join '' ) + '\n'
-  for pattern, pattern_idx in @backslash_patterns
-    text = text.replace pattern, "##{pattern_idx};"
-  log '\n' + text
+  text = text.replace @backslash_pattern, ( _, $1 ) ->
+    cid = ( $1.codePointAt 0 ).toString 16
+    return "^#{cid};"
+  log text
+  # for pattern, pattern_idx in @backslash_patterns
+  #   is_plain  = no
+  #   stretches = []
+  #   for stretch in text.split pattern
+  #     is_plain = not is_plain
+  #     _.push ( if is_plain then CND.white else CND.rainbow ) stretch
+  #   _.push '\n'
+  #   _.push '\n'
+  # log '\n' + ( _.join '' ) + '\n'
+  # for pattern, pattern_idx in @backslash_patterns
+  #   text = text.replace pattern, "##{pattern_idx};"
+  # log '\n' + text
 
 mkts_backslash_escaping()
 
