@@ -49,15 +49,42 @@ mkts_backslash_escaping = ->
     R = text
     R = R.replace /// \x11 ( [ 0-9 a-f ]+ ) ; ///g, ( _, $1 ) ->
       chr = String.fromCodePoint parseInt $1, 16
-      return "\\#{cid0};"
+      return "\\#{chr}"
     R = R.replace /// \x10X ///g, '\x15'
     R = R.replace /// \x10C ///g, '\x12'
     R = R.replace /// \x10B ///g, '\x11'
     R = R.replace /// \x10A ///g, '\x10'
     return R
 
-  ### TAINT not compatible with 32bit codepoins ###
-  @backslash_pattern = /// \\ ( . ) ///g
+  #-----------------------------------------------------------------------------------------------------------
+  @escape.remove_escaping_backslashes = ( S, text ) =>
+    return text.replace /// \\ ( . ) ///g, '$1'
+
+  # #-----------------------------------------------------------------------------------------------------------
+  # @escape.escape_chrs = ( S, text ) =>
+  #   R = text
+  #   R = R.replace /// % ///g, '%A' # ASCII DLE, Master escape
+  #   R = R.replace /// & ///g, '%B' # ASCII DC1, Backslash Character escape
+  #   R = R.replace /// ! ///g, '%X' # ASCII NAK, Macro escape
+  #   R = R.replace /// \\ ( (?: [  \ud800-\udbff ] [ \udc00-\udfff ] ) | . ) ///g, ( _, $1 ) ->
+  #     cid = ( $1.codePointAt 0 ).toString 16
+  #     return "&#{cid};"
+  #   return R
+
+  # #-----------------------------------------------------------------------------------------------------------
+  # @escape.unescape_escape_chrs = ( S, text ) =>
+  #   R = text
+  #   R = R.replace /// & ( [ 0-9 a-f ]+ ) ; ///g, ( _, $1 ) ->
+  #     chr = String.fromCodePoint parseInt $1, 16
+  #     return "\\#{chr}"
+  #   R = R.replace /// %X ///g, '!'
+  #   R = R.replace /// %C ///g, '\x12'
+  #   R = R.replace /// %B ///g, '&'
+  #   R = R.replace /// %A ///g, '%'
+  #   return R
+
+  # ### TAINT not compatible with 32bit codepoins ###
+  # @backslash_pattern = /// \\ ( . ) ///g
   # ,
   #   ///
   #   ( \\<< )
@@ -80,7 +107,7 @@ mkts_backslash_escaping = ->
   #   ///g
     # ]
   text = """
-    some <<unlicensed>> stuff here.
+    some <<unlicensed>> stuff here. \\𠄨 &%!%A&123;
     some more \\\\<<unlicensed\\\\>> stuff here.
     some \\<<licensed\\>> stuff here, and <\\<
     The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
@@ -88,12 +115,17 @@ mkts_backslash_escaping = ->
   # text = ""
   # text = "<<"
   # text = "x"
-  debug '©93543', rpr text
-  _ = []
-  text = text.replace @backslash_pattern, ( _, $1 ) ->
-    cid = ( $1.codePointAt 0 ).toString 16
-    return "^#{cid};"
-  log text
+  debug text
+  help cloaked_text   = @escape.escape_chrs null, text
+  whisper rpr cloaked_text
+  urge uncloaked_text = @escape.unescape_escape_chrs null, cloaked_text
+  warn '©79011', uncloaked_text if uncloaked_text isnt text
+  help '©79011', @escape.remove_escaping_backslashes null, uncloaked_text
+  # _ = []
+  # text = text.replace @backslash_pattern, ( _, $1 ) ->
+  #   cid = ( $1.codePointAt 0 ).toString 16
+  #   return "^#{cid};"
+  # log text
   # for pattern, pattern_idx in @backslash_patterns
   #   is_plain  = no
   #   stretches = []
