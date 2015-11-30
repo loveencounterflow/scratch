@@ -31,6 +31,31 @@ every                     = suspend.every
 
 #===========================================================================================================
 mkts_backslash_escaping = ->
+  @escape = {}
+
+  #-----------------------------------------------------------------------------------------------------------
+  @escape.escape_chrs = ( S, text ) =>
+    R = text
+    R = R.replace /// \x10 ///g, '\x10A' # ASCII DLE, Master escape
+    R = R.replace /// \x11 ///g, '\x10B' # ASCII DC1, Backslash Character escape
+    R = R.replace /// \x15 ///g, '\x10X' # ASCII NAK, Macro escape
+    R = R.replace /// \\ ( (?: [  \ud800-\udbff ] [ \udc00-\udfff ] ) | . ) ///g, ( _, $1 ) ->
+      cid = ( $1.codePointAt 0 ).toString 16
+      return "\x11#{cid};"
+    return R
+
+  #-----------------------------------------------------------------------------------------------------------
+  @escape.unescape_escape_chrs = ( S, text ) =>
+    R = text
+    R = R.replace /// \x11 ( [ 0-9 a-f ]+ ) ; ///g, ( _, $1 ) ->
+      chr = String.fromCodePoint parseInt $1, 16
+      return "\\#{cid0};"
+    R = R.replace /// \x10X ///g, '\x15'
+    R = R.replace /// \x10C ///g, '\x12'
+    R = R.replace /// \x10B ///g, '\x11'
+    R = R.replace /// \x10A ///g, '\x10'
+    return R
+
   ### TAINT not compatible with 32bit codepoins ###
   @backslash_pattern = /// \\ ( . ) ///g
   # ,
