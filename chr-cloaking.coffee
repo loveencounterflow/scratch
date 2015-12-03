@@ -97,11 +97,10 @@ CLOAK.new '012345678'
 ###
 
 #-----------------------------------------------------------------------------------------------------------
-### from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions ###
-esc_re = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
-
-#-----------------------------------------------------------------------------------------------------------
 @new = ( chrs ) ->
+  #.........................................................................................................
+  ### from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions ###
+  esc_re = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
   #.........................................................................................................
   unless chrs?
     chrs = [ '\x10', '\x11', '\x12', '\x13', '\x14', ]
@@ -119,12 +118,11 @@ esc_re = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
     throw new Error "expected an odd number of characters, got #{chr_count}"
   #.........................................................................................................
   delta               = ( chr_count + 1 ) / 2 - 1
-  escape_chr          = chrs[ chr_count - delta - 1 ]
-  meta_chr_patterns   = ( /// #{esc_re chrs[ idx ]} ///g        for idx in [ 0 .. delta ] )
-  target_seq_chrs     = ( "#{escape_chr}#{chrs[ idx + delta ]}" for idx in [ 0 .. delta ] )
-  target_seq_patterns = ( /// #{esc_re target_seq_chrs[ idx ]} ///g     for idx in [ 0 .. delta ] )
+  master              = chrs[ chr_count - delta - 1 ]
+  meta_chr_patterns   = ( /// #{esc_re chrs[ idx ]} ///g            for idx in [ 0 .. delta ] )
+  target_seq_chrs     = ( "#{master}#{chrs[ idx + delta ]}"         for idx in [ 0 .. delta ] )
+  target_seq_patterns = ( /// #{esc_re target_seq_chrs[ idx ]} ///g for idx in [ 0 .. delta ] )
   cloaked             = chrs[ 0 ... delta ]
-  Object.freeze cloaked
   #.........................................................................................................
   cloak = ( text ) =>
     R = text
@@ -136,69 +134,74 @@ esc_re = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
     R = R.replace target_seq_patterns[ idx ], chrs[ idx ] for idx in [ 0 .. delta ]
     return R
   #.........................................................................................................
-  return { cloak, uncloak, cloaked, }
+  return { cloak, uncloak, cloaked, master, esc_re, }
 
-CLOAK = @
-text = """
-  % & ! ;
-  some <<unlicensed>> stuff here. \\𠄨 &%!%A&123;
-  some more \\\\<<unlicensed\\\\>> stuff here.
-  some \\<<licensed\\>> stuff here, and <\\<
-  The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
-  """
-# debug '©94643', @_mcp_backslash
-# text = "% ; 2 3 \\ \\\\ \\𠄨"
-text = "0 1 2 3 4 5 6 7 8"
-# text = "<<"
-# text = "x"
-# whisper rpr cloaked_text
-DIFF = require 'coffeenode-diff'
-{ cloak, uncloak, cloaked, } = CLOAK.new '012'
-{ cloak, uncloak, cloaked, } = CLOAK.new '01234'
-{ cloak, uncloak, cloaked, } = CLOAK.new '0123456'
-help "cloaked: #{rpr cloaked}"
-cloaked_text = text
-log '(1) -', CND.rainbow ( text )
-log '(2) -', CND.rainbow ( cloaked_text   = cloak cloaked_text )
-# log '(3) -', CND.rainbow ( cloaked_text   = @cloak_backslashed_chrs    cloaked_text )
-uncloaked_text = cloaked_text
-# log '(4) -', CND.rainbow ( uncloaked_text = @uncloak_backslashed_chrs  uncloaked_text )
-log '(5) -', CND.rainbow ( uncloaked_text = uncloak uncloaked_text )
-# log '(7) -', CND.rainbow '©79011', @remove_backslashes               uncloaked_text
-if uncloaked_text isnt text
-  log DIFF.colorize text, uncloaked_text
+############################################################################################################
+unless module.parent?
+  CLOAK = @
+  DIFF  = require 'coffeenode-diff'
+  { cloak
+    uncloak
+    cloaked
+    master
+    esc_re } = CLOAK.new '()234'
+  help { cloaked, master, }
+  [ start_chr
+    stop_chr  ] = cloaked
 
-log CND.steel '########################################################################'
+  #-----------------------------------------------------------------------------------------------------------
+  ### backslashes are dealt with in slightly different ways: ###
+  ### `oc`: 'original character' ###
+  _oc_backslash      = '\\'
+  ### `op`: 'original pattern' ###
+  _oce_backslash     = esc_re _oc_backslash
+  _mcp_backslash     = ///
+    #{esc_re _oc_backslash}
+    ( (?: [  \ud800-\udbff ] [ \udc00-\udfff ] ) | . ) ///g
+  _tsp_backslash     = /// #{esc_re start_chr} ( [ 0-9 a-f ]+ ) #{esc_re stop_chr} ///g
+  ### `rm`: 'remove' ###
+  _rm_backslash      = /// #{esc_re _oc_backslash} ( . ) ///g
 
-# #-----------------------------------------------------------------------------------------------------------
-# ### backslashes are dealt with in slightly different ways: ###
-# ### `oc`: 'original character' ###
-# @_oc_backslash      = '\\'
-# ### `op`: 'original pattern' ###
-# @_oce_backslash     = esc_re @_oc_backslash
-# @_mcp_backslash     = ///
-#   #{esc_re @_oc_backslash}
-#   ( (?: [  \ud800-\udbff ] [ \udc00-\udfff ] ) | . ) ///g
-# @_tsp_backslash     = /// #{@_mc_bs} ( [ 0-9 a-f ]+ ) #{@_mc_stop} ///g
-# ### `rm`: 'remove' ###
-# @_rm_backslash      = /// #{esc_re @_oc_backslash} ( . ) ///g
+  #-----------------------------------------------------------------------------------------------------------
+  cloak_backslashed_chrs = ( text ) =>
+    R = text
+    R = R.replace _mcp_backslash, ( _, $1 ) ->
+      cid_hex = ( $1.codePointAt 0 ).toString 16
+      return "#{start_chr}#{cid_hex}#{stop_chr}"
+    return R
 
-# #-----------------------------------------------------------------------------------------------------------
-# @cloak_backslashed_chrs = ( text ) =>
-#   R = text
-#   R = R.replace @_mcp_backslash, ( _, $1 ) ->
-#     cid = ( $1.codePointAt 0 ).toString 16
-#     return "#{@_mc_bs}#{cid}#{@_mc_stop}"
-#   return R
+  #-----------------------------------------------------------------------------------------------------------
+  uncloak_backslashed_chrs = ( text ) =>
+    R = text
+    R = R.replace _tsp_backslash, ( _, $1 ) ->
+      chr = String.fromCodePoint parseInt $1, 16
+      return "#{_oc_backslash}#{chr}"
+    return R
 
-# #-----------------------------------------------------------------------------------------------------------
-# @uncloak_backslashed_chrs = ( text ) =>
-#   R = text
-#   R = R.replace @_tsp_backslash, ( _, $1 ) ->
-#     chr = String.fromCodePoint parseInt $1, 16
-#     return "#{@_oc_backslash}#{chr}"
-#   return R
+  #-----------------------------------------------------------------------------------------------------------
+  remove_backslashes = ( text ) =>
+    return text.replace _rm_backslash, '$1'
 
-# #-----------------------------------------------------------------------------------------------------------
-# @remove_backslashes = ( text ) =>
-#   return text.replace @_rm_backslash, '$1'
+  text = """
+    % & ! ;
+    some <<unlicensed>> stuff here. \\𠄨 &%!%A&123;
+    some more \\\\<<unlicensed\\\\>> stuff here.
+    some \\<<licensed\\>> stuff here, and <\\<
+    The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
+    """
+  # debug '©94643', @_mcp_backslash
+  # text = "% ; 2 3 \\ \\\\ \\𠄨"
+  # text = "0 1 2 3 4 5 6 7 8"
+  # text = "<<"
+  log '(1) -', CND.rainbow ( text )
+  cloaked_text = text
+  log '(2) -', CND.rainbow ( cloaked_text   = cloak cloaked_text )
+  log '(3) -', CND.rainbow ( cloaked_text   = cloak_backslashed_chrs    cloaked_text )
+  uncloaked_text = cloaked_text
+  log '(4) -', CND.rainbow ( uncloaked_text = uncloak_backslashed_chrs  uncloaked_text )
+  log '(5) -', CND.rainbow ( uncloaked_text = uncloak uncloaked_text )
+  log '(7) -', CND.rainbow '©79011', remove_backslashes               uncloaked_text
+  if uncloaked_text isnt text
+    log DIFF.colorize text, uncloaked_text
+
+  log CND.steel '########################################################################'
