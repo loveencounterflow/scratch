@@ -83,91 +83,104 @@ Using more than two primary escapements is possible, but less interesting:
 
 #-----------------------------------------------------------------------------------------------------------
 ### from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions ###
-escre = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
+esc_re = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
+
+#-----------------------------------------------------------------------------------------------------------
+@new = ( cloaked_chrs ) ->
+  unless cloaked_chrs?
+    cloaked_chrs = [ '\x10', '\x11', '\x12', '\x13', '\x14', ]
+  else if CND.isa_text cloaked_chrs
+    cloaked_chrs = Array.from cloaked_chrs
+  else unless CND.isa_list cloaked_chrs
+    throw new Error "expected a text or a list, got a #{CND.type_of cloaked_chrs}"
+  switch chr_count = cloaked_chrs.length
+    when 5
+      # #---------------------------------------------------------------------------------------------------
+      # # ### `mc`: 'meta character' ###
+      # mc_4              = 'D'
+      # mc_3              = 'C'
+      # mc_2              = 'B'
+      # mc_stop           = ';'
+      # mc_start          = '%'
+      #-----------------------------------------------------------------------------------------------------------
+      ### `mc`: 'meta character' ###
+      mc_4              = cloaked_chrs[ 4 ]
+      mc_3              = cloaked_chrs[ 3 ]
+      mc_2              = cloaked_chrs[ 2 ]
+      mc_stop           = cloaked_chrs[ 1 ]
+      mc_start          = cloaked_chrs[ 0 ]
+
+      #---------------------------------------------------------------------------------------------------
+      ### `mcp`: 'meta character pattern' ###
+      mcp_2             = /// #{esc_re mc_2}      ///g
+      mcp_stop          = /// #{esc_re mc_stop}   ///g
+      mcp_start         = /// #{esc_re mc_start}  ///g
+
+      #---------------------------------------------------------------------------------------------------
+      ### `tsc`: 'target sequence character' ###
+      tsc_2             = "#{mc_2}#{mc_4}"
+      tsc_stop          = "#{mc_2}#{mc_3}"
+      tsc_start         = "#{mc_2}#{mc_2}"
+
+      #---------------------------------------------------------------------------------------------------
+      ### `tsp`: 'target sequence pattern' ###
+      tsp_2             = /// #{esc_re tsc_2}       ///g
+      tsp_stop          = /// #{esc_re tsc_stop}    ///g
+      tsp_start         = /// #{esc_re tsc_start}   ///g
+
+      #---------------------------------------------------------------------------------------------------
+      cloak = ( text ) =>
+        R = text
+        R = R.replace mcp_2,        tsc_2
+        R = R.replace mcp_stop,     tsc_stop
+        R = R.replace mcp_start,    tsc_start
+        return R
+
+      #---------------------------------------------------------------------------------------------------
+      uncloak = ( text ) =>
+        R = text
+        R = R.replace tsp_start,    mc_start
+        R = R.replace tsp_stop,     mc_stop
+        R = R.replace tsp_2,        mc_2
+        return R
+    else
+      throw new Error "expected 5 characters, got #{chr_count}"
+  return { cloak, uncloak, }
 
 # #-----------------------------------------------------------------------------------------------------------
-# ### `mc`: 'meta character' ###
-metaesc_mc_4              = 'D'
-metaesc_mc_3              = 'C'
-metaesc_mc_2              = 'B'
-metaesc_mc_stop           = ';'
-metaesc_mc_start          = '%'
+# ### backslashes are dealt with in slightly different ways: ###
+# ### `oc`: 'original character' ###
+# @_oc_backslash      = '\\'
+# ### `op`: 'original pattern' ###
+# @_oce_backslash     = esc_re @_oc_backslash
+# @_mcp_backslash     = ///
+#   #{esc_re @_oc_backslash}
+#   ( (?: [  \ud800-\udbff ] [ \udc00-\udfff ] ) | . ) ///g
+# @_tsp_backslash     = /// #{@_mc_bs} ( [ 0-9 a-f ]+ ) #{@_mc_stop} ///g
+# ### `rm`: 'remove' ###
+# @_rm_backslash      = /// #{esc_re @_oc_backslash} ( . ) ///g
 
 # #-----------------------------------------------------------------------------------------------------------
-# ### `mc`: 'meta character' ###
-# metaesc_mc_4              = '\x14'
-# metaesc_mc_3              = '\x13'
-# metaesc_mc_2              = '\x12'
-# metaesc_mc_stop           = '\x11'
-# metaesc_mc_start          = '\x10'
+# @cloak_backslashed_chrs = ( text ) =>
+#   R = text
+#   R = R.replace @_mcp_backslash, ( _, $1 ) ->
+#     cid = ( $1.codePointAt 0 ).toString 16
+#     return "#{@_mc_bs}#{cid}#{@_mc_stop}"
+#   return R
 
-#-----------------------------------------------------------------------------------------------------------
-### `mcp`: 'meta character pattern' ###
-metaesc_mcp_2             = /// #{escre metaesc_mc_2}      ///g
-metaesc_mcp_stop          = /// #{escre metaesc_mc_stop}   ///g
-metaesc_mcp_start         = /// #{escre metaesc_mc_start}  ///g
+# #-----------------------------------------------------------------------------------------------------------
+# @uncloak_backslashed_chrs = ( text ) =>
+#   R = text
+#   R = R.replace @_tsp_backslash, ( _, $1 ) ->
+#     chr = String.fromCodePoint parseInt $1, 16
+#     return "#{@_oc_backslash}#{chr}"
+#   return R
 
-#-----------------------------------------------------------------------------------------------------------
-### `tsc`: 'target sequence character' ###
-metaesc_tsc_2             = "#{metaesc_mc_2}#{metaesc_mc_4}"
-metaesc_tsc_stop          = "#{metaesc_mc_2}#{metaesc_mc_3}"
-metaesc_tsc_start         = "#{metaesc_mc_2}#{metaesc_mc_2}"
+# #-----------------------------------------------------------------------------------------------------------
+# @remove_backslashes = ( text ) =>
+#   return text.replace @_rm_backslash, '$1'
 
-#-----------------------------------------------------------------------------------------------------------
-### `tsp`: 'target sequence pattern' ###
-metaesc_tsp_2             = /// #{escre metaesc_tsc_2}       ///g
-metaesc_tsp_stop          = /// #{escre metaesc_tsc_stop}    ///g
-metaesc_tsp_start         = /// #{escre metaesc_tsc_start}   ///g
-
-#-----------------------------------------------------------------------------------------------------------
-### backslashes are dealt with in slightly different ways: ###
-### `oc`: 'original character' ###
-metaesc_oc_backslash      = '\\'
-### `op`: 'original pattern' ###
-metaesc_oce_backslash     = escre metaesc_oc_backslash
-metaesc_mcp_backslash     = ///
-  #{escre metaesc_oc_backslash}
-  ( (?: [  \ud800-\udbff ] [ \udc00-\udfff ] ) | . ) ///g
-metaesc_tsp_backslash     = /// #{metaesc_mc_bs} ( [ 0-9 a-f ]+ ) #{metaesc_mc_stop} ///g
-### `rm`: 'remove' ###
-metaesc_rm_backslash      = /// #{escre metaesc_oc_backslash} ( . ) ///g
-
-#-----------------------------------------------------------------------------------------------------------
-@cloak_escape_chrs = ( text ) =>
-  R = text
-  R = R.replace metaesc_mcp_2,        metaesc_tsc_2
-  R = R.replace metaesc_mcp_stop,     metaesc_tsc_stop
-  R = R.replace metaesc_mcp_start,    metaesc_tsc_start
-  return R
-
-#-----------------------------------------------------------------------------------------------------------
-@uncloak_escape_chrs = ( text ) =>
-  R = text
-  R = R.replace metaesc_tsp_start,    metaesc_mc_start
-  R = R.replace metaesc_tsp_stop,     metaesc_mc_stop
-  R = R.replace metaesc_tsp_2,        metaesc_mc_2
-  return R
-
-#-----------------------------------------------------------------------------------------------------------
-@cloak_backslashed_chrs = ( text ) =>
-  R = text
-  R = R.replace metaesc_mcp_backslash, ( _, $1 ) ->
-    cid = ( $1.codePointAt 0 ).toString 16
-    return "#{metaesc_mc_bs}#{cid}#{metaesc_mc_stop}"
-  return R
-
-#-----------------------------------------------------------------------------------------------------------
-@uncloak_backslashed_chrs = ( text ) =>
-  R = text
-  R = R.replace metaesc_tsp_backslash, ( _, $1 ) ->
-    chr = String.fromCodePoint parseInt $1, 16
-    return "#{metaesc_oc_backslash}#{chr}"
-  return R
-
-#-----------------------------------------------------------------------------------------------------------
-@remove_backslashes = ( text ) =>
-  return text.replace metaesc_rm_backslash, '$1'
-
+CLOAK = @
 text = """
   % & ! ;
   some <<unlicensed>> stuff here. \\𠄨 &%!%A&123;
@@ -175,20 +188,21 @@ text = """
   some \\<<licensed\\>> stuff here, and <\\<
   The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`
   """
-# debug '©94643', metaesc_mcp_backslash
+# debug '©94643', @_mcp_backslash
 # text = "% ; 2 3 \\ \\\\ \\𠄨"
 text = "% ; A B C D E"
 # text = "<<"
 # text = "x"
 # whisper rpr cloaked_text
 DIFF = require 'coffeenode-diff'
+{ cloak, uncloak, } = CLOAK.new 'ABCDE'
 cloaked_text = text
 log '(1) -', CND.rainbow ( text )
-log '(2) -', CND.rainbow ( cloaked_text   = @cloak_escape_chrs         cloaked_text )
+log '(2) -', CND.rainbow ( cloaked_text   = cloak cloaked_text )
 # log '(3) -', CND.rainbow ( cloaked_text   = @cloak_backslashed_chrs    cloaked_text )
 uncloaked_text = cloaked_text
 # log '(4) -', CND.rainbow ( uncloaked_text = @uncloak_backslashed_chrs  uncloaked_text )
-log '(5) -', CND.rainbow ( uncloaked_text = @uncloak_escape_chrs       uncloaked_text )
+log '(5) -', CND.rainbow ( uncloaked_text = uncloak uncloaked_text )
 # log '(7) -', CND.rainbow '©79011', @remove_backslashes               uncloaked_text
 if uncloaked_text isnt text
   log DIFF.colorize text, uncloaked_text

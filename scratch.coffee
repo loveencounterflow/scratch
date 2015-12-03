@@ -33,6 +33,136 @@ every                     = suspend.every
 
 
 #===========================================================================================================
+unicode_data = ->
+  UCS = require '/tmp/node_modules/unicode-8.0.0'
+  debug '©54981', UCS
+  # help hieroglyphs = require '/tmp/node_modules/unicode-8.0.0/scripts/Egyptian_Hieroglyphs/code-points'
+  categories = require '/tmp/node_modules/unicode-8.0.0/categories'
+  debug '©42920', require '/tmp/node_modules/unicode-8.0.0/categories/L/code-points'
+  #.........................................................................................................
+  is_graphic = ( cid ) ->
+    category = categories[ cid ]
+    throw new Error "unable to get category for CID #{rpr cid}" unless category?
+    return true if category is 'Zs'
+    return category[ 0 ] in [ 'L', 'M', 'N', 'P', 'S', ]
+  #.........................................................................................................
+  for cid in [ 0x0000 .. 0x030 ]
+    cid_hex = cid.toString 16
+    help cid_hex, categories[ cid ], CND.truth is_graphic cid
+
+# unicode_data()
+
+get_is_cjk_method = ->
+  unicode_blocks = [
+    # [ 'Hangul Jamo',                                     'u-hang-jm',         0x1100,    0x11ff,  ]
+    [ 'CJK Radicals Supplement',                         'u-cjk-rad2',        0x2e80,    0x2eff,  ]
+    [ 'Kangxi Radicals',                                 'u-cjk-rad1',        0x2f00,    0x2fdf,  ]
+    # [ 'Ideographic Description Characters',              'u-cjk-idc',         0x2ff0,    0x2fff,  ]
+    # [ 'CJK Symbols and Punctuation',                     'u-cjk-sym',         0x3000,    0x303f,  ]
+    # [ 'Hiragana',                                        'u-cjk-hira',        0x3040,    0x309f,  ]
+    # [ 'Katakana',                                        'u-cjk-kata',        0x30a0,    0x30ff,  ]
+    # [ 'Bopomofo',                                        'u-bopo',            0x3100,    0x312f,  ]
+    # [ 'Hangul Compatibility Jamo',                       'u-hang-comp-jm',    0x3130,    0x318f,  ]
+    # [ 'Kanbun',                                          'u-cjk-kanbun',      0x3190,    0x319f,  ]
+    # [ 'Bopomofo Extended',                               'u-bopo-x',          0x31a0,    0x31bf,  ]
+    [ 'CJK Strokes',                                     'u-cjk-strk',        0x31c0,    0x31ef,  ]
+    # [ 'Katakana Phonetic Extensions',                    'u-cjk-kata-x',      0x31f0,    0x31ff,  ]
+    # [ 'Enclosed CJK Letters and Months',                 'u-cjk-enclett',     0x3200,    0x32ff,  ]
+    # [ 'CJK Compatibility',                               'u-cjk-cmp',         0x3300,    0x33ff,  ]
+    [ 'CJK Unified Ideographs Extension A',              'u-cjk-xa',          0x3400,    0x4dbf,  ]
+    # [ 'Yijing Hexagram Symbols',                         'u-yijng',           0x4dc0,    0x4dff,  ]
+    [ 'CJK Unified Ideographs',                          'u-cjk',             0x4e00,    0x9fff,  ]
+    # [ 'Hangul Syllables',                                'u-hang-syl',        0xac00,    0xd7af,  ]
+    # [ 'CJK Compatibility Ideographs',                    'u-cjk-cmpi1',       0xf900,    0xfaff,  ]
+    # [ 'Vertical Forms',                                  'u-vertf',           0xfe10,    0xfe1f,  ]
+    # [ 'CJK Compatibility Forms',                         'u-cjk-cmpf',        0xfe30,    0xfe4f,  ]
+    # [ 'Small Form Variants',                             'u-small',           0xfe50,    0xfe6f,  ]
+    # [ 'Halfwidth and Fullwidth Forms',                   'u-halfull',         0xff00,    0xffef,  ]
+    # [ 'Tai Xuan Jing Symbols',                           'u-txj-sym',        0x1d300,   0x1d35f,  ]
+    # [ 'Enclosed Ideographic Supplement',                 'u-cjk-encsupp',    0x1f200,   0x1f2ff,  ]
+    [ 'CJK Unified Ideographs Extension B',              'u-cjk-xb',         0x20000,   0x2a6df,  ]
+    [ 'CJK Unified Ideographs Extension C',              'u-cjk-xc',         0x2a700,   0x2b73f,  ]
+    [ 'CJK Unified Ideographs Extension D',              'u-cjk-xd',         0x2b740,   0x2b81f,  ]
+    [ 'CJK Unified Ideographs Extension E',              'u-cjk-xe',         0x2b820,   0x2ceaf,  ]
+    # [ 'CJK Compatibility Ideographs Supplement',         'u-cjk-cmpi2',      0x2f800,   0x2fa1f,  ]
+    ]
+  ITREE = CND.INTERVALTREE
+  tree  = ITREE.new_tree()
+  for [ range_name, rsg, first_cid, last_cid, ] in unicode_blocks
+    ITREE.add_interval tree, [ first_cid, last_cid, rsg, ]
+  return ( cid ) -> ( ITREE.find tree, cid ).length > 0
+
+
+#===========================================================================================================
+unicode_data_count = ->
+  is_cjk = get_is_cjk_method()
+  # for cid in [ 0x4db0 .. 0x4e00 ]
+  #   echo ( cid.toString 16 ), ( CND.truth is_cjk cid )
+  ƒ               = CND.format_number
+  TABLE           = require 'table'
+  table_data      = []
+  table_settings  =
+    columnDefault: { alignment: 'right' }
+    # columns:
+    #   0: { alignment: 'right', }
+    #   1: { alignment: 'right', }
+    #   2: { alignment: 'right', }
+    #   3: { alignment: 'right', }
+    #   4: { alignment: 'right', }
+  versions    = [
+      'unicode-2.0.14'
+      'unicode-2.1.2'
+      'unicode-3.0.0'
+      'unicode-3.1.0'
+      'unicode-3.2.0'
+      'unicode-4.0.0'
+      'unicode-4.1.0'
+      'unicode-5.0.0'
+      'unicode-5.1.0'
+      'unicode-5.2.0'
+      'unicode-6.0.0'
+      'unicode-6.1.0'
+      'unicode-6.2.0'
+      'unicode-6.3.0'
+      'unicode-7.0.0'
+      'unicode-8.0.0'
+      # 'unicode-1.1.5'
+      # 'unicode-2.0.14'
+      # 'unicode-2.1.2'
+      # 'unicode-2.1.5'
+      # 'unicode-2.1.8'
+      # 'unicode-2.1.9'
+      # 'unicode-3.0.0'
+      # 'unicode-3.0.1'
+      # 'unicode-3.1.0'
+      # 'unicode-3.2.0'
+      # 'unicode-4.0.0'
+      # 'unicode-4.0.1'
+      # 'unicode-4.1.0'
+      # 'unicode-5.0.0'
+      # 'unicode-5.1.0'
+      # 'unicode-5.2.0'
+      # 'unicode-6.0.0'
+      # 'unicode-6.1.0'
+      # 'unicode-6.2.0'
+      # 'unicode-6.3.0'
+      # 'unicode-7.0.0'
+      # 'unicode-8.0.0'
+      ]
+  for version in versions
+    cid_count     = 0
+    cjk_cid_count = 0
+    for category in [ 'L', 'M', 'N', 'P', 'S', 'Zs', ]
+      for cid in require "#{version}/categories/#{category}/code-points"
+        cid_count      += +1
+        cjk_cid_count  += +1 if is_cjk cid
+      # table_data.push [ version, ( ƒ cid_count.size ), ]
+    echo "#{version}\t#{cid_count}\t#{cjk_cid_count}"
+  # echo TABLE.default table_data, table_settings
+
+unicode_data_count()
+
+#===========================================================================================================
 mkts_backslash_escaping = ->
 
   # #-----------------------------------------------------------------------------------------------------------
@@ -203,7 +333,7 @@ mkts_backslash_escaping = ->
   #   text = text.replace pattern, "##{pattern_idx};"
   # log '\n' + text
 
-mkts_backslash_escaping()
+# mkts_backslash_escaping()
 
 #===========================================================================================================
 mkts_illegal_patterns = ->
