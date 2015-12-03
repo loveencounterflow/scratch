@@ -93,58 +93,98 @@ esc_re = ( text ) -> text.replace /[.*+?^${}()|[\]\\]/g, "\\$&"
     cloaked_chrs = Array.from cloaked_chrs
   else unless CND.isa_list cloaked_chrs
     throw new Error "expected a text or a list, got a #{CND.type_of cloaked_chrs}"
-  switch chr_count = cloaked_chrs.length
-    when 5
-      # #---------------------------------------------------------------------------------------------------
-      # # ### `mc`: 'meta character' ###
-      # mc_4              = 'D'
-      # mc_3              = 'C'
-      # mc_2              = 'B'
-      # mc_stop           = ';'
-      # mc_start          = '%'
-      #-----------------------------------------------------------------------------------------------------------
-      ### `mc`: 'meta character' ###
-      mc_4              = cloaked_chrs[ 4 ]
-      mc_3              = cloaked_chrs[ 3 ]
-      mc_2              = cloaked_chrs[ 2 ]
-      mc_stop           = cloaked_chrs[ 1 ]
-      mc_start          = cloaked_chrs[ 0 ]
+  unless ( chr_count = cloaked_chrs.length ) >= 4
+    throw new Error "expected at least 4 characters, got #{chr_count}"
+  escape_chr = cloaked_chrs[ chr_count - 3 ]
+  # #---------------------------------------------------------------------------------------------------
+  # # ### `mc`: 'meta character' ###
+  # mc_4              = 'D'
+  # cloaked_chrs[ 3 ]              = 'C'
+  # cloaked_chrs[ 2 ]              = 'B'
+  # cloaked_chrs[ 1 ]           = ';'
+  # cloaked_chrs[ 0 ]          = '%'
+  #-----------------------------------------------------------------------------------------------------------
+  ### `mc`: 'meta character' ###
+  # cloaked_chrs[ 4 ]              = cloaked_chrs[ 4 ]
+  # cloaked_chrs[ 3 ]              = cloaked_chrs[ 3 ]
+  # cloaked_chrs[ 2 ]              = cloaked_chrs[ 2 ]
+  # cloaked_chrs[ 1 ]              = cloaked_chrs[ 1 ]
+  # cloaked_chrs[ 0 ]              = cloaked_chrs[ 0 ]
 
-      #---------------------------------------------------------------------------------------------------
-      ### `mcp`: 'meta character pattern' ###
-      mcp_2             = /// #{esc_re mc_2}      ///g
-      mcp_stop          = /// #{esc_re mc_stop}   ///g
-      mcp_start         = /// #{esc_re mc_start}  ///g
+  #---------------------------------------------------------------------------------------------------
+  ### `mcp`: 'meta character pattern' ###
+  mcp_2             = /// #{esc_re cloaked_chrs[ 2 ]}      ///g
+  mcp_stop          = /// #{esc_re cloaked_chrs[ 1 ]}   ///g
+  mcp_start         = /// #{esc_re cloaked_chrs[ 0 ]}  ///g
 
-      #---------------------------------------------------------------------------------------------------
-      ### `tsc`: 'target sequence character' ###
-      tsc_2             = "#{mc_2}#{mc_4}"
-      tsc_stop          = "#{mc_2}#{mc_3}"
-      tsc_start         = "#{mc_2}#{mc_2}"
 
-      #---------------------------------------------------------------------------------------------------
-      ### `tsp`: 'target sequence pattern' ###
-      tsp_2             = /// #{esc_re tsc_2}       ///g
-      tsp_stop          = /// #{esc_re tsc_stop}    ///g
-      tsp_start         = /// #{esc_re tsc_start}   ///g
+  #---------------------------------------------------------------------------------------------------
+  ### `tsc`: 'target sequence character' ###
+  tsc_2             = "#{cloaked_chrs[ 2 ]}#{cloaked_chrs[ 4 ]}"
+  tsc_stop          = "#{cloaked_chrs[ 2 ]}#{cloaked_chrs[ 3 ]}"
+  tsc_start         = "#{cloaked_chrs[ 2 ]}#{cloaked_chrs[ 2 ]}"
 
-      #---------------------------------------------------------------------------------------------------
-      cloak = ( text ) =>
-        R = text
-        R = R.replace mcp_2,        tsc_2
-        R = R.replace mcp_stop,     tsc_stop
-        R = R.replace mcp_start,    tsc_start
-        return R
+  #---------------------------------------------------------------------------------------------------
+  ### `tsp`: 'target sequence pattern' ###
+  tsp_2             = /// #{esc_re tsc_2}       ///g
+  tsp_stop          = /// #{esc_re tsc_stop}    ///g
+  tsp_start         = /// #{esc_re tsc_start}   ///g
 
-      #---------------------------------------------------------------------------------------------------
-      uncloak = ( text ) =>
-        R = text
-        R = R.replace tsp_start,    mc_start
-        R = R.replace tsp_stop,     mc_stop
-        R = R.replace tsp_2,        mc_2
-        return R
-    else
-      throw new Error "expected 5 characters, got #{chr_count}"
+  #---------------------------------------------------------------------------------------------------
+  cloak = ( text ) =>
+    R = text
+    R = R.replace mcp_2,        tsc_2
+    R = R.replace mcp_stop,     tsc_stop
+    R = R.replace mcp_start,    tsc_start
+    return R
+
+  #---------------------------------------------------------------------------------------------------
+  uncloak = ( text ) =>
+    R = text
+    R = R.replace tsp_start,    cloaked_chrs[ 0 ]
+    R = R.replace tsp_stop,     cloaked_chrs[ 1 ]
+    R = R.replace tsp_2,        cloaked_chrs[ 2 ]
+    return R
+
+  debug '©51393' for idx in [ 0 .. chr_count - 3 ]
+  debug '©73729', chr_count
+  debug '©73729', chr_count - 3
+  delta = chr_count - 3
+  meta_chr_patterns   = ( /// #{esc_re cloaked_chrs[ idx ]} ///g        for idx in [ 0 .. delta ] )
+  target_seq_chrs     = ( "#{escape_chr}#{cloaked_chrs[ idx + delta ]}" for idx in [ 0 .. delta ] )
+  target_seq_patterns = ( /// #{esc_re target_seq_chrs[ idx ]} ///g     for idx in [ 0 .. delta ] )
+
+  debug '©26248', meta_chr_patterns
+  debug '©12386', target_seq_chrs
+  debug '©64335', target_seq_patterns
+  debug '©-0', CND.truth CND.equals meta_chr_patterns[ 2 ], mcp_2
+  debug '©-1', CND.truth CND.equals meta_chr_patterns[ 1 ], mcp_stop
+  debug '©-2', CND.truth CND.equals meta_chr_patterns[ 0 ], mcp_start
+  debug '©-3', CND.truth CND.equals target_seq_chrs[ 2 ], tsc_2
+  debug '©-4', CND.truth CND.equals target_seq_chrs[ 1 ], tsc_stop
+  debug '©-5', CND.truth CND.equals target_seq_chrs[ 0 ], tsc_start
+  debug '©-6', CND.truth CND.equals target_seq_patterns[ 2 ], tsp_2
+  debug '©-7', CND.truth CND.equals target_seq_patterns[ 1 ], tsp_stop
+  debug '©-8', CND.truth CND.equals target_seq_patterns[ 0 ], tsp_start
+  debug '©-3a', rpr tsc_2
+  debug '©-4a', rpr tsc_stop
+  debug '©-5a', rpr tsc_start
+  debug '©-6a', rpr tsp_2
+  debug '©-7a', rpr tsp_stop
+  debug '©-8a', rpr tsp_start
+
+  #---------------------------------------------------------------------------------------------------
+  cloak = ( text ) =>
+    R = text
+    R = R.replace meta_chr_patterns[ idx ], target_seq_chrs[ idx ] for idx in [ delta .. 0 ] by -1
+    return R
+
+  #---------------------------------------------------------------------------------------------------
+  uncloak = ( text ) =>
+    R = text
+    R = R.replace target_seq_patterns[ idx ], cloaked_chrs[ idx ] for idx in [ 0 .. delta ] by +1
+    return R
+
   return { cloak, uncloak, }
 
 # #-----------------------------------------------------------------------------------------------------------
