@@ -144,7 +144,7 @@ unless module.parent?
     uncloak
     cloaked
     master
-    esc_re } = CLOAK.new '()234'
+    esc_re } = CLOAK.new '()FGH'
   help { cloaked, master, }
   [ start_chr
     stop_chr  ] = cloaked
