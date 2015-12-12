@@ -1,0 +1,27 @@
+\documentclass{article}
+\usepackage{multicol}
+\usepackage{fontspec}
+\newfontface{\mktsFontfileSunexta}{sun-exta.ttf}[Path=/home/flow/io/jizura-fonts/fonts/]
+\newcommand{\cn}{\mktsFontfileSunexta}
+
+\newcommand{\mktsInterCjkChrSpace}{\hskip -0.4pt plus 3pt minus 1pt}
+
+\newenvironment{showspaces}
+ {\obeyspaces\obeylines
+  \begingroup\lccode`\~=`\ \lowercase{\endgroup\let~}\mktsInterCjkChrSpace
+  \begingroup\lccode`\~=`\^^M\lowercase{\endgroup\let~}\mktsInterCjkChrSpace}
+ {}
+
+
+\begin{document}
+\begin{multicols}{5}
+
+Brick Tea \begin{showspaces}%
+{\cn{}
+紧 压 茶 是 为 了 长 途 运 输 和 长 时 间 保 存 方 便 ， 将 茶 压 缩 干 燥 ， 压 成 方 砖 状 或 块 状 ， 为 了 防 止 途 中 变 质 ， 一 般 紧 压 茶 都 是 用 红 茶 或 黑 茶 制 作 。
+紧 压 茶 是 为 了 长 途 运 输 和 长 时 间 保 存 方 便 ， 将 茶 压 缩 干 燥 ， 压 成 方 砖 状 或 块 状 ， 为 了 防 止 途 中 变 质 ， 一 般 紧 压 茶 都 是 用 红 茶 或 黑 茶 制 作 。
+}\end{showspaces}
+Brick Tea
+
+\end{multicols}
+\end{document}

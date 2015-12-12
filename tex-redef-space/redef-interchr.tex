@@ -1,0 +1,52 @@
+\documentclass{article}
+
+\usepackage{multicol}
+\usepackage{fontspec}
+\newfontface{\mktsFontfileSunexta}{sun-exta.ttf}[Path=/home/flow/io/jizura-fonts/fonts/]
+\newcommand{\cn}{\mktsFontfileSunexta}
+% \setmainfont{Helvetica}
+\newcommand{\mktsInterCjkChrSpace}{\hskip -0.4pt plus 3pt minus 1pt}
+% \newcommand{\mktsInterCjkChrSpace}{\hskip -0.4pt plus 0pt minus 1pt}
+
+% http://tex.stackexchange.com/questions/10248/font-selection-in-xetex-for-specific-characters
+% ftp://ftp.mpi-sb.mpg.de/pub/tex/mirror/ftp.dante.de/pub/tex/info/xetexref/xetex-reference.pdf
+\XeTeXinterchartokenstate=1
+\chardef\CharNormal=0
+\chardef\CharCjk=1
+\chardef\CharCjkPunctA=2
+\chardef\CharCjkPunctB=3
+\chardef\CharBound=255
+
+% \XeTeXinterchartoks\CharNormal\CharNormal={\mktsInterCjkChrSpace}
+\XeTeXinterchartoks\CharNormal\CharCjk={\mktsInterCjkChrSpace}
+\XeTeXinterchartoks\CharCjk\CharNormal={\mktsInterCjkChrSpace}
+% \XeTeXinterchartoks\CharCjk\CharBound={---}
+% \XeTeXinterchartoks\CharBound\CharCjk={---}
+\XeTeXinterchartoks\CharCjkPunctA\CharCjk={\mktsInterCjkChrSpace}
+\XeTeXinterchartoks\CharCjkPunctB\CharCjk={\mktsInterCjkChrSpace}
+\XeTeXinterchartoks\CharCjk\CharCjkPunctA={\mktsInterCjkChrSpace}
+\XeTeXinterchartoks\CharCjk\CharCjkPunctB={\mktsInterCjkChrSpace}
+\XeTeXinterchartoks\CharCjk\CharCjk={\mktsInterCjkChrSpace}
+
+% \XeTeXupwardsmode=1
+% \XeTeXtracingfonts=1
+% \newXeTeXintercharclass\ExclamClass
+% \XeTeXcharclass 33=\ExclamClass
+% \XeTeXinterchartoks\ExclamClass\ExclamClass={---}
+
+\begin{document}
+\begin{multicols}{3}
+
+Computers are much pickier and less flexible about spelling than humans; thus, hackers need to be very precise when talking about characters, and have developed a considerable amount of verbal shorthand for them. Every character has one or more names — some formal, some concise, some silly. Common jargon names for ASCII characters are collected here. See also individual entries for bang, excl, open, ques, semi, shriek, splat, twiddle, and Yu-Shiang Whole Fish.
+Brick Tea
+{\cn{}x x x x x x
+紧压茶是为了长途运输和长时间保存方便，将茶压缩干燥，压成方砖状或块状，为了防止途中变质，一般紧压茶都是用红茶或黑茶制作。
+紧压茶是为了长途运输和长时间保存方便，将茶压缩干燥，压成方砖状或块状，为了防止途中变质，一般紧压茶都是用红茶或黑茶制作。
+紧压茶是为了长途运输和长时间保存方便，将茶压缩干燥，压成方砖状或块状，为了防止途中变质，一般紧压茶都是用红茶或黑茶制作。
+}
+Brick Tea Computers are much pickier and less flexible about spelling than humans; thus, hackers need to be very precise when talking about characters, and have developed a considerable amount of verbal shorthand for them. Every character has one or more names — some formal, some concise, some silly. Common jargon names for ASCII characters are collected here. See also individual entries for bang, excl, open, ques, semi, shriek, splat, twiddle, and Yu-Shiang Whole Fish.
+
+
+
+\end{multicols}
+\end{document}
