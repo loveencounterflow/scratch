@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage{expl3}
+\ExplSyntaxOn
+\cs_new:Npn \demo:n #1
+  {
+    \tl_count:n {#1} ;
+    \tl_if_empty:nT {#1} { Empty! }
+    \tl_if_blank:nTF {#1}
+      { Blank! }
+      {
+        Head = \tl_head:n {#1} ;
+        Tail = \tl_tail:n {#1} ;
+        demo:n { \tl_tail:n {#1} } ;
+        End
+      }
+  }
+\cs_new_eq:NN \demo \demo:n
+\ExplSyntaxOff
+\newcommand*{\hello}{hello}
+\begin{document}
+\demo{Hello world}
+
+\demo{ }
+
+\demo{}
+
+\demo{\hello}
+\end{document}

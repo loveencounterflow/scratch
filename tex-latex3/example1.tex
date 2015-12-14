@@ -1,0 +1,9 @@
+\documentclass{article}
+\usepackage{expl3}
+\ExplSyntaxOn
+\cs_new:Npn \SayHello #1
+  { \prg_replicate:nn {#1} { Hello~World!~ } }
+\ExplSyntaxOff
+\begin{document}
+\SayHello{ 3 / 5 }
+\end{document}
