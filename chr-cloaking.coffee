@@ -184,7 +184,7 @@ unless module.parent?
 
   text = """
     % & ! ;
-    some <<unlicensed>> stuff here. \\𠄨 &%!%A&123;
+    some <<unlicensed>> (stuff here). \\𠄨 &%!%A&123;
     some more \\\\<<unlicensed\\\\>> stuff here.
     some \\<<licensed\\>> stuff here, and <\\<
     The <<<\\LaTeX{}>>> Logo: `<<<\\LaTeX{}>>>`

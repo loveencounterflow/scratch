@@ -29,6 +29,30 @@ immediately               = suspend.immediately
 every                     = suspend.every
 
 
+#===========================================================================================================
+guy_git = ->
+  step ( resume ) ->
+    new_git = require 'simple-git'
+    glob    = require 'glob'
+    pattern = ( njs_path.resolve njs_path.join __dirname, '..' ) + '/*/.git/'
+    routes  = yield glob pattern, resume
+    for route in routes
+      route = njs_path.resolve route, '..'
+      # process.chdir route
+      git           = new_git route
+      description   = yield git.status resume
+      { not_added
+        deleted
+        modified
+        created   } = description
+      change_count  = not_added.length + deleted.length + modified.length + created.length
+      if change_count > 0
+        warn route, "(#{change_count})"
+      else
+        whisper route
+      # info description
+
+guy_git()
 
 
 
@@ -160,7 +184,7 @@ unicode_data_count = ->
     echo "#{version}\t#{cid_count}\t#{cjk_cid_count}"
   # echo TABLE.default table_data, table_settings
 
-unicode_data_count()
+# unicode_data_count()
 
 #===========================================================================================================
 mkts_backslash_escaping = ->
