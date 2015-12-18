@@ -157,12 +157,10 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
     for factor, factor_idx in factors
       sortcode = sortcodes[ factor_idx ]
       # 再 [["0226f---",null],"再",[],[]]
-      debug '8735', JSON.stringify [ factor, 'guide/kwic/v3/sortcode', [ [ sortcode, null, ], factor, [], [], ] ]
       send [ factor, 'guide/kwic/v3/sortcode', [ [ [ sortcode, null, ], factor, [], [], ] ], ]
 
-
 #-----------------------------------------------------------------------------------------------------------
-@create_searchstream = ( source_db, target_db, prefix, hi, handler ) ->
+@create_searchwrite_tee = ( source_db, target_db, prefix, hi, handler ) ->
   ### TAINT not yet a 'create stream' method ###
   ### TAINT use of star not correct ###
   switch arity = arguments.length
@@ -178,23 +176,33 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
     else
       return handler new Error "expected 4 or 5 arguments, got #{arity}"
   #.........................................................................................................
-  input = HOLLERITH.create_phrasestream source_db, query
+  source        = HOLLERITH.create_phrasestream source_db, query
+  readstream    = D.create_throughstream()
+  writestream   = D.create_throughstream()
+  R             = D.TEE.from_readwritestreams readstream, writestream #, settings
+  { input }     = R.tee
+  #.........................................................................................................
+  source.pause()
+  input.pause()
+  #.........................................................................................................
+  source.pipe input
+  source.on 'end',    => help "source has ended"; input.end()
+  input.on  'resume', => source.resume()
   #.........................................................................................................
   input
     .pipe D.$show()
     .pipe $ ( phrase, send ) =>
-      [ _, prd, obj, sbj, idx, ] = phrase
+      [ _, sbj, prd, obj, idx, ] = HOLLERITH.normalize_phrase source_db, phrase
       send [ sbj, prd, obj, ]
-    # .pipe accumulator
     .pipe HOLLERITH.$write target_db
     .pipe D.$on_end =>
       help "query #{rpr query} completed"
       handler null
   #.........................................................................................................
-  return null
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
-@f = ->
+@f = ( max_rank = 50 ) ->
   S                   = {}
   S.home              = njs_path.resolve __dirname, '../jizura-datasources'
   S.source_route      = njs_path.resolve S.home, 'data/leveldb-v2'
@@ -206,32 +214,49 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
   S.confluence_A      = @create_resultstream S.target_db, 'rank/cjt'
   S.confluence_B      = @create_resultstream S.target_db, 'guide/kwic/v3/sortcode'
   #.........................................................................................................
-  step ( resume ) =>
-    yield HOLLERITH.clear S.target_db, resume
-    #.......................................................................................................
-    lo = [ 'pos', 'rank/cjt', -Infinity, ]
-    hi = [ 'pos', 'rank/cjt', 10, ]
-    #.......................................................................................................
-    S.confluence_A
-      .pipe $ ( phrase, send ) => urge 'confluence_A', phrase; send phrase
-      .pipe @$add_lineups S
-      # .pipe D.$show()
-      .pipe HOLLERITH.$write S.target_db
-      .pipe D.$on_end =>
-        help "confluence_A has ended"
-        S.confluence_B.end()
-    #.......................................................................................................
-    S.confluence_B
-      # .pipe $ ( phrase, send ) => urge 'confluence_B', phrase; send phrase
-      .pipe @$add_sortcode_derivates S
-      .pipe HOLLERITH.$write S.target_db, { unique: no, }
-      .pipe D.$on_end => help "confluence_B has ended"
-    #.......................................................................................................
-    yield @create_searchstream S.source_db, S.target_db, lo, hi, resume
-    S.confluence_A.end()
-    return null
+  phase_1 = =>
+    step ( resume ) =>
+      yield HOLLERITH.clear S.target_db, resume
+      #.....................................................................................................
+      S.confluence_A
+        .pipe $ ( phrase, send ) => urge 'confluence_A', phrase; send phrase
+        .pipe @$add_lineups S
+        .pipe HOLLERITH.$write S.target_db
+        .pipe D.$on_end =>
+          help "confluence_A has ended"
+          S.confluence_B.end()
+      #.....................................................................................................
+      S.confluence_B
+        # .pipe $ ( phrase, send ) => urge 'confluence_B', phrase; send phrase
+        .pipe D.$show(), '97342 confluence_B'
+        .pipe @$add_sortcode_derivates S
+        .pipe HOLLERITH.$write S.target_db, { unique: no, }
+        .pipe D.$on_end =>
+          help "confluence_B has ended"
+          phase_2()
+      #.....................................................................................................
+      lo = [ 'pos', 'rank/cjt', -Infinity, ]
+      hi = [ 'pos', 'rank/cjt', max_rank, ]
+      #.....................................................................................................
+      tee_A               = @create_searchwrite_tee S.source_db, S.target_db, lo, hi, resume
+      { input, output, }  = tee_A.tee
+      output.on 'end', =>
+        help "output has ended"
+      input.on 'end', =>
+        help "input has ended"
+        S.confluence_A.end()
+      input.resume()
+      return null
+  #.........................................................................................................
+  phase_2 = =>
+    debug '923847', phase_2
+    # step ( resume ) =>
+    #   prefix = [ 'spo', ]
+      # yield @create_searchwrite_tee S.source_db, S.target_db, prefix, resume
+  #.........................................................................................................
+  phase_1()
 
 
 ############################################################################################################
 unless module.parent?
-  @f()
+  @f 5
