@@ -102,6 +102,8 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
   db_substrate  = db[ '%self' ]
   prefix        = [ 'pos', predicate, ]
   query         = HOLLERITH._query_from_prefix db, prefix, '*'
+  # debug '©73742', query[ 'gte' ]
+  # debug '©73742', query[ 'lte' ]
   #.........................................................................................................
   ### see https://github.com/dominictarr/level-live-stream/#options ###
   settings =
@@ -180,7 +182,8 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
   readstream    = D.create_throughstream()
   writestream   = D.create_throughstream()
   R             = D.TEE.from_readwritestreams readstream, writestream #, settings
-  { input }     = R.tee
+  { input
+    output }    = R.tee
   #.........................................................................................................
   source.pause()
   input.pause()
@@ -194,6 +197,7 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
     .pipe $ ( phrase, send ) =>
       [ _, sbj, prd, obj, idx, ] = HOLLERITH.normalize_phrase source_db, phrase
       send [ sbj, prd, obj, ]
+    .pipe output
     .pipe HOLLERITH.$write target_db
     .pipe D.$on_end =>
       help "query #{rpr query} completed"
@@ -219,7 +223,8 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
       yield HOLLERITH.clear S.target_db, resume
       #.....................................................................................................
       S.confluence_A
-        .pipe $ ( phrase, send ) => urge 'confluence_A', phrase; send phrase
+        .pipe D.$show '97734 confluence_A'
+        # .pipe $ ( phrase, send ) => urge 'confluence_A', phrase; send phrase
         .pipe @$add_lineups S
         .pipe HOLLERITH.$write S.target_db
         .pipe D.$on_end =>
@@ -228,7 +233,7 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
       #.....................................................................................................
       S.confluence_B
         # .pipe $ ( phrase, send ) => urge 'confluence_B', phrase; send phrase
-        .pipe D.$show(), '97342 confluence_B'
+        .pipe D.$show '97342 confluence_B'
         .pipe @$add_sortcode_derivates S
         .pipe HOLLERITH.$write S.target_db, { unique: no, }
         .pipe D.$on_end =>
@@ -240,12 +245,22 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
       #.....................................................................................................
       tee_A               = @create_searchwrite_tee S.source_db, S.target_db, lo, hi, resume
       { input, output, }  = tee_A.tee
+      output
+        .pipe $ ( event, send, end ) =>
+          if event?
+            send event
+          if end?
+            send end_symbol
+            # end()
       output.on 'end', =>
         help "output has ended"
+        # S.confluence_A.end()
       input.on 'end', =>
         help "input has ended"
-        S.confluence_A.end()
+        # input.end()
+        # setImmediate => output.end()
       input.resume()
+      # input.end()
       return null
   #.........................................................................................................
   phase_2 = =>
@@ -256,6 +271,7 @@ HOLLERITH.prune = ( me, prefix, filter, handler ) ->
   #.........................................................................................................
   phase_1()
 
+end_symbol = [ '上', 'rank/cjt', 5, ]
 
 ############################################################################################################
 unless module.parent?
